@@ -1,0 +1,185 @@
+<!doctype html><html lang="fr"
+<!-- Mirrored from www.bibmath.net/dico/index.php?action=affiche&quoi=./c/cvu.html by HTTrack Website Copier/3.x [XR&CO'2014], Tue, 27 Aug 2024 11:11:15 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=UTF-8" /><!-- /Added by HTTrack -->
+<head><meta charset="utf-8"><script async src="https://tags.refinery89.com/v2/bibmathnet.js"></script><script async src="https://www.googletagmanager.com/gtag/js?id=G-CTYE0T3DYG"></script><script>window.dataLayer = window.dataLayer || [];  function gtag(){dataLayer.push(arguments);}  gtag('js', new Date());  gtag('config', 'G-CTYE0T3DYG');</script>
+<meta name="Author" CONTENT="Fred Bayart"><meta name="Description" CONTENT="Dictionnaire de mathématiques"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Convergence simple, uniforme, normale</title><link type="text/css" href="https://www.bibmath.net/css/bibstyle.css" rel="stylesheet" /><script type='text/x-mathjax-config'>
+MathJax.Hub.Config({  tex2jax: {inlineMath: [ ['$','$'], ['\\(','\\)'] ] }, CommonHTML: {
+scale: 90
+} }); </script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_CHTML"></script><script type="text/javascript" src="https://www.bibmath.net/common/fonctions.js"></script></head><body>	<div style="display:none">$$\newcommand{\mtn}{\mathbb{N}}\newcommand{\mtns}{\mathbb{N}^*}\newcommand{\mtz}{\mathbb{Z}}\newcommand{\mtr}{\mathbb{R}}\newcommand{\mtk}{\mathbb{K}}\newcommand{\mtq}{\mathbb{Q}}\newcommand{\mtc}{\mathbb{C}}\newcommand{\mch}{\mathcal{H}}\newcommand{\mcp}{\mathcal{P}}\newcommand{\mcb}{\mathcal{B}}\newcommand{\mcl}{\mathcal{L}}
+\newcommand{\mcm}{\mathcal{M}}\newcommand{\mcc}{\mathcal{C}}
+\newcommand{\mcmn}{\mathcal{M}}\newcommand{\mcmnr}{\mathcal{M}_n(\mtr)}
+\newcommand{\mcmnk}{\mathcal{M}_n(\mtk)}\newcommand{\mcsn}{\mathcal{S}_n}
+\newcommand{\mcs}{\mathcal{S}}\newcommand{\mcd}{\mathcal{D}}
+\newcommand{\mcsns}{\mathcal{S}_n^{++}}\newcommand{\glnk}{GL_n(\mtk)}
+\newcommand{\mnr}{\mathcal{M}_n(\mtr)}\DeclareMathOperator{\ch}{ch}
+\DeclareMathOperator{\sh}{sh}\DeclareMathOperator{\th}{th}
+\DeclareMathOperator{\vect}{vect}\DeclareMathOperator{\card}{card}
+\DeclareMathOperator{\comat}{comat}\DeclareMathOperator{\imv}{Im}
+\DeclareMathOperator{\rang}{rg}\DeclareMathOperator{\Fr}{Fr}
+\DeclareMathOperator{\diam}{diam}\DeclareMathOperator{\supp}{supp}
+\newcommand{\veps}{\varepsilon}\newcommand{\mcu}{\mathcal{U}}
+\newcommand{\mcun}{\mcu_n}\newcommand{\dis}{\displaystyle}
+\newcommand{\croouv}{[\![}\newcommand{\crofer}{]\!]}
+\newcommand{\rab}{\mathcal{R}(a,b)}\newcommand{\pss}[2]{\langle #1,#2\rangle}
+$$</div><header id="bandeau"><div id="bandeaucentre"><span id=bandeaulogo>Bibm@th.net</span><span id=bandeaumilieu><a href="https://www.youtube.com/channel/UCP-LXgvAe7CMdf_dddUcLmw" alt="Visitez notre chaine YouTube" title="Visiter notre chaine YouTube"><img src="https://www.bibmath.net/img/youtube.png" /></a><a href="https://www.facebook.com/bibmath" alt="Consulter notre page FaceBook" title="Consulter notre page Facebook"><img src="https://www.bibmath.net/img/fb.png" /></a><a href="https://www.bibmath.net/forums/login.php" alt="Consulter mon compte" title="Vous n'êtes pas identifié. Identifiez-vous."><img src="https://www.bibmath.net/img/moncompte.png" /></a></span><form id="formrech" name="recherche" action="https://www.bibmath.net/recherche.php"  method="get"><div id=bandeaurecherche>
+	<input name="q" placeholder="Rechercher sur le site..." class="formulairerecherche inputrecherche" />
+	<button class="formulairerecherche boutonrecherche" value="" title="Rechercher"> 
+	<img src="https://www.bibmath.net//img/recherche.png" height=30px>
+	</button></div></form></div></header><header id="bandeaumobile"><div class="sousbandeaumobile"><span class="itembandeaumobile" id="iconeouvremenu"><a href="javascript:ouvremenumobile()"><img src="https://www.bibmath.net/img/menumobile.png" /></a></span><span class="itembandeaumobilefondnoir" id="iconefermemenu"><a href="javascript:fermemenumobile()"><img src="https://www.bibmath.net/img/deletemobile.png"></a></span><span class="itembandeaumobile">Bibm@th</span></div><div class="sousbandeaumobile"><span class="itembandeaumobile"><a href="https://www.bibmath.net/forums/index.php" title="Accéder au forum du site"><img src="https://www.bibmath.net/img/forumgrand.png" /></a></span><span class="itembandeaumobilesansbordure"><a href="https://www.facebook.com/bibmath" alt="Consulter notre page FaceBook" title="Consulter notre page Facebook"><img src="https://www.bibmath.net/img/fbmobile.png" /></a></span><span class="itembandeaumobilesansbordure"><a href="https://www.bibmath.net/forums/login.php" alt="Consulter mon compte" title="Vous n'êtes pas identifié. Identifiez-vous."><img src="https://www.bibmath.net/img/moncomptemobile.png" /></a></span><span class="itembandeaumobile"  id="iconeouvrerecherche"><a href="javascript:ouvrerecherchemobile()"><img src="https://www.bibmath.net/img/loupemobile.png" /></a></span><span class="itembandeaumobilefondnoir" id="iconefermerecherche"><a href="javascript:fermerecherchemobile()"><img src="https://www.bibmath.net/img/deletemobile.png"></a></span></div></header><div id="recherchemobile"><form id="formrecherchemobile" name="recherche" action="https://www.bibmath.net/recherche.php"  method="get"><div class="divinputrecherche"><input name="q" placeholder="Rechercher sur le site..." class="formulairerecherche inputrecherche" /></div><div class="divboutonmobile"><button class="formulairerecherche boutonrecherche" value="" title="Rechercher"> </button></div></form></div><div id="menuetsousmenu"><nav id="menuhaut"><div id="menuhautcentre"><div id="menuhautgauche"><section id="listemenuhaut"><span id="menu0" class="item"><a href="https://www.bibmath.net/index.php"><img src="https://www.bibmath.net/img/maison.png" />Accueil</a></span><span id="menu1" class="item"><a href="javascript:affiche_sousmenu(1);"><img src="https://www.bibmath.net/img/lycee16.png" />Lycée</a></span><span id="menu2" class="item"><a href="javascript:affiche_sousmenu(2);"><img src="https://www.bibmath.net/img/ressources.png" />Supérieur</a></span><span id="menu3" class="item"><a href="javascript:affiche_sousmenu(3);"><img src="https://www.bibmath.net/img/bibliotheques.png" />Bibliothèques</a></span><span id="menu4" class="itemselectionne"><a href="javascript:affiche_sousmenu(4);"><img src="https://www.bibmath.net/img/references.png" />Références</a></span><span id="menu5" class="item"><a href="javascript:affiche_sousmenu(5);"><img src="https://www.bibmath.net/img/themes.png" />Thèmes</a></span><span id="menu6" class="item"><a href="https://www.bibmath.net/forums/index.php"><img src="https://www.bibmath.net/img/forum.png" />Forum</a></span></section></div><div id="menuhautdroite"><section id="listemenuhaut"><span id="menu7" class="item"><a href="https://www.bibmath.net/ressources/moncompte.php"><img src="https://www.bibmath.net/img/profil.png" />Mon compte</a></span></section></div></div></nav><nav id="sousmenuhaut"><div id="sousmenuhautcentre"><section id="listesousmenuhaut"><div class="sousmenucontenu" id="sousmenu_0" style="display:none" ></div><div class="sousmenucontenu" id="sousmenu_1" style="display:none" ><span class="sousmenuitem"><a href="https://www.bibmath.net/ressources/index.php?action=affiche&amp;quoi=college/index">Collège</a></span><span class="sousmenuitem"><a href="https://www.bibmath.net/ressources/index.php?action=affiche&amp;quoi=seconde/index">Seconde</a></span><span class="sousmenuitem"><a href="https://www.bibmath.net/ressources/index.php?action=affiche&amp;quoi=grandoral/index">Grand Oral</a></span></div><div class="sousmenucontenu" id="sousmenu_2" style="display:none" ><span class="sousmenuitem"><a href="https://www.bibmath.net/ressources/index.php?action=affiche&amp;quoi=mpsi/index">Math Sup</a></span><span class="sousmenuitem"><a href="https://www.bibmath.net/ressources/index.php?action=affiche&amp;quoi=mathspe/index">Math Spé</a></span><span class="sousmenuitem"><a href="https://www.bibmath.net/ressources/index.php?action=affiche&amp;quoi=capes/index">Capes</a></span><span class="sousmenuitem"><a href="https://www.bibmath.net/ressources/index.php?action=affiche&amp;quoi=agreginterne/index">Agreg interne</a></span><span class="sousmenuitem"><a href="https://www.bibmath.net/ressources/index.php?action=affiche&amp;quoi=bts/index">BTS</a></span></div><div class="sousmenucontenu" id="sousmenu_3" style="display:none" ><span class="sousmenuitem"><a href="https://www.bibmath.net/ressources/index.php?action=affiche&amp;quoi=bde/index">Bibliothèque d'exercices</a></span><span class="sousmenuitem"><a href="https://www.bibmath.net/pbs/index.php">Bibliothèque de problèmes</a></span><span class="sousmenuitem"><a href="https://www.bibmath.net/quizz/index.php">Automatismes</a></span></div><div class="sousmenucontenu" id="sousmenu_4" style="display:flex" ><span class="sousmenuitemselectionne"><a href="https://www.bibmath.net/dico/index.php">Dictionnaire</a></span><span class="sousmenuitem"><a href="https://www.bibmath.net/bios/index.php">Biographie de mathématiciens</a></span><span class="sousmenuitem"><a href="https://www.bibmath.net/formulaire/index.php">Formulaire</a></span><span class="sousmenuitem"><a href="https://www.bibmath.net/trans/index.php">Lexique français/anglais</a></span></div><div class="sousmenucontenu" id="sousmenu_5" style="display:none" ><span class="sousmenuitem"><a href="https://www.bibmath.net/crypto/index.php">Cryptographie et codes secrets</a></span><span class="sousmenuitem"><a href="https://www.bibmath.net/jeux/index.php">Jeux et énigmes</a></span><span class="sousmenuitem"><a href="https://www.bibmath.net/carres/index.php?action=affiche&amp;quoi=carres">Carrés magiques</a></span><span class="sousmenuitem"><a href="https://www.bibmath.net/quotidien/index.php">Mathématiques au quotidien</a></span><span class="sousmenuitem"><a href="https://www.bibmath.net/dossiers/index.php">Dossiers</a></span></div><div class="sousmenucontenu" id="sousmenu_6" style="display:none" ></div><div class="sousmenucontenu" id="sousmenu_7" style="display:none" ></div></section></div></nav><nav id="menumobile"><div class="itemmenumobile"><div class="teteitemmenumobile"><span><a href="https://www.bibmath.net/index.php">Accueil</a></span><img src="https://www.bibmath.net/img/flechemenumobileferme.png" id="sousmenumobileimageferme0"  /><img src="https://www.bibmath.net/img/flechemenumobileouvert.png" id="sousmenumobileimageouvert0"  style="display:none;"/></div></div><div class="itemmenumobile"><div class="teteitemmenumobile"><span><a href="javascript:affiche_sousmenumobile(1);">Lycée</a></span><img src="https://www.bibmath.net/img/flechemenumobileferme.png" id="sousmenumobileimageferme1"  /><img src="https://www.bibmath.net/img/flechemenumobileouvert.png" id="sousmenumobileimageouvert1"  style="display:none;"/></div><div class="sousmenumobile" id="sousmenumobile1"><div class="sousitemmenumobile"><span><a href="https://www.bibmath.net/ressources/index.php?action=affiche&amp;quoi=college/index">Collège</a></span></div><div class="sousitemmenumobile"><span><a href="https://www.bibmath.net/ressources/index.php?action=affiche&amp;quoi=seconde/index">Seconde</a></span></div><div class="sousitemmenumobile"><span><a href="https://www.bibmath.net/ressources/index.php?action=affiche&amp;quoi=grandoral/index">Grand Oral</a></span></div></div></div><div class="itemmenumobile"><div class="teteitemmenumobile"><span><a href="javascript:affiche_sousmenumobile(2);">Supérieur</a></span><img src="https://www.bibmath.net/img/flechemenumobileferme.png" id="sousmenumobileimageferme2"  /><img src="https://www.bibmath.net/img/flechemenumobileouvert.png" id="sousmenumobileimageouvert2"  style="display:none;"/></div><div class="sousmenumobile" id="sousmenumobile2"><div class="sousitemmenumobile"><span><a href="https://www.bibmath.net/ressources/index.php?action=affiche&amp;quoi=mpsi/index">Math Sup</a></span></div><div class="sousitemmenumobile"><span><a href="https://www.bibmath.net/ressources/index.php?action=affiche&amp;quoi=mathspe/index">Math Spé</a></span></div><div class="sousitemmenumobile"><span><a href="https://www.bibmath.net/ressources/index.php?action=affiche&amp;quoi=capes/index">Capes</a></span></div><div class="sousitemmenumobile"><span><a href="https://www.bibmath.net/ressources/index.php?action=affiche&amp;quoi=agreginterne/index">Agreg interne</a></span></div><div class="sousitemmenumobile"><span><a href="https://www.bibmath.net/ressources/index.php?action=affiche&amp;quoi=bts/index">BTS</a></span></div></div></div><div class="itemmenumobile"><div class="teteitemmenumobile"><span><a href="javascript:affiche_sousmenumobile(3);">Bibliothèques</a></span><img src="https://www.bibmath.net/img/flechemenumobileferme.png" id="sousmenumobileimageferme3"  /><img src="https://www.bibmath.net/img/flechemenumobileouvert.png" id="sousmenumobileimageouvert3"  style="display:none;"/></div><div class="sousmenumobile" id="sousmenumobile3"><div class="sousitemmenumobile"><span><a href="https://www.bibmath.net/ressources/index.php?action=affiche&amp;quoi=bde/index">Bibliothèque d'exercices</a></span></div><div class="sousitemmenumobile"><span><a href="https://www.bibmath.net/pbs/index.php">Bibliothèque de problèmes</a></span></div><div class="sousitemmenumobile"><span><a href="https://www.bibmath.net/quizz/index.php">Automatismes</a></span></div></div></div><div class="itemmenumobileselectionne"><div class="teteitemmenumobile"><span><a href="javascript:affiche_sousmenumobile(4);">Références</a></span><img src="https://www.bibmath.net/img/flechemenumobileferme.png" id="sousmenumobileimageferme4"  /><img src="https://www.bibmath.net/img/flechemenumobileouvert.png" id="sousmenumobileimageouvert4"  style="display:none;"/></div><div class="sousmenumobile" id="sousmenumobile4"><div class="sousitemmenumobile"><span><a href="https://www.bibmath.net/dico/index.php">Dictionnaire</a></span></div><div class="sousitemmenumobile"><span><a href="https://www.bibmath.net/bios/index.php">Biographie de mathématiciens</a></span></div><div class="sousitemmenumobile"><span><a href="https://www.bibmath.net/formulaire/index.php">Formulaire</a></span></div><div class="sousitemmenumobile"><span><a href="https://www.bibmath.net/trans/index.php">Lexique français/anglais</a></span></div></div></div><div class="itemmenumobile"><div class="teteitemmenumobile"><span><a href="javascript:affiche_sousmenumobile(5);">Thèmes</a></span><img src="https://www.bibmath.net/img/flechemenumobileferme.png" id="sousmenumobileimageferme5"  /><img src="https://www.bibmath.net/img/flechemenumobileouvert.png" id="sousmenumobileimageouvert5"  style="display:none;"/></div><div class="sousmenumobile" id="sousmenumobile5"><div class="sousitemmenumobile"><span><a href="https://www.bibmath.net/crypto/index.php">Cryptographie et codes secrets</a></span></div><div class="sousitemmenumobile"><span><a href="https://www.bibmath.net/jeux/index.php">Jeux et énigmes</a></span></div><div class="sousitemmenumobile"><span><a href="https://www.bibmath.net/carres/index.php?action=affiche&amp;quoi=carres">Carrés magiques</a></span></div><div class="sousitemmenumobile"><span><a href="https://www.bibmath.net/quotidien/index.php">Mathématiques au quotidien</a></span></div><div class="sousitemmenumobile"><span><a href="https://www.bibmath.net/dossiers/index.php">Dossiers</a></span></div></div></div><div class="itemmenumobile"><div class="teteitemmenumobile"><span><a href="https://www.bibmath.net/forums/index.php">Forum</a></span><img src="https://www.bibmath.net/img/flechemenumobileferme.png" id="sousmenumobileimageferme6"  /><img src="https://www.bibmath.net/img/flechemenumobileouvert.png" id="sousmenumobileimageouvert6"  style="display:none;"/></div></div><div class="itemmenumobile"><div class="teteitemmenumobile"><span><a href="https://www.bibmath.net/ressources/moncompte.php">Mon compte</a></span><img src="https://www.bibmath.net/img/flechemenumobileferme.png" id="sousmenumobileimageferme7"  /><img src="https://www.bibmath.net/img/flechemenumobileouvert.png" id="sousmenumobileimageouvert7"  style="display:none;"/></div></div></nav></div><div id="main"><div id="maincentre"><div id="gauche"><div id="pubhaute"><div class="r89-desktop-leaderboard-atf"></div><div style="min-height:280px;" class="r89-mobile-billboard-top"></div></div><article id="contenugauche"><div class="chemin"><a href="https://www.bibmath.net/dico/index.php">Dictionnaire de mathématiques</a> &gt; <a href="https://www.bibmath.net/dico/index.php?action=rub&amp;quoi=300">Analyse</a> &gt; <a href="https://www.bibmath.net/dico/index.php?action=rub&amp;quoi=310">Suites et séries de fonctions</a> &gt; </div><h1>Convergence simple, uniforme, normale</h1><p class=dtexte>De nombreuses fonctions apparaissent naturellement comme des limites d'autres fonctions plus simples. C'est le
+ cas par exemple de la fonction exponentielle, que l'on peut définir par l'une des deux formules suivantes :
+ $$e^x=\lim_{n\to+\infty}\left(1+\frac xn\right)^n\textrm{ ou }e^x=1+x+\frac{x^2}{2!}+\cdots+\frac{x^n}{n!}+\cdots$$
+C'est aussi le cas pour des problèmes plus théoriques, comme lorsque l'on construit des solutions d'équations (par exemple différentielles) :
+on construit souvent par récurrence des solutions approchées qui "convergent" vers une solution exacte.</p>
+<p class=dtexte>Ainsi, les problèmes suivants sont importants : quel sens peut-on donner à la convergence d'une suite de fonctions? Quelles sont les 
+propriétés qui sont ainsi préservées?</p>
+<div class=titrepartie>Convergence simple</div>
+
+<div class=theotexte>
+<span class=grastheo>Définition :</span> Soit $I$ un intervalle de $\mathbb R$, $(f_n)$ une suite de fonctions définies sur $I$, et $f$ définie sur $I$.
+On dit que $(f_n)$ <span class=rougedico>converge simplement</span> vers f sur I si pour tout x appartenant à I, la suite $(f_n(x))$ converge vers $f(x)$.
+</div>
+<p class=ntexte><b>Ex :</b> $I=[0,1]$ et $f_n(x)=x^n$. Il est clair que $(f_n)$ converge simplement vers la fonction $f$ définie par $f(x)=0$ si $x$ est dans $[0,1[$
+et $f(1)=1$.</p>
+<p class=dtexte>
+Dès cet exemple très simple, on constate l'insuffisance de la convergence simple : chaque fonction $(f_n)$ est continue,
+la suite $(f_n)$ converge simplement vers $f$, et pourtant $f$ n'est pas continue. Ainsi, la continuité n'est pas préservée par convergence simple. C'est pourquoi on a 
+besoin d'une notion plus précise.</p>
+
+<div class=titrepartie>Convergence uniforme</div>
+
+<div class=theotexte>
+<b>Définition :</b>  Soit $I$ un intervalle de $\mathbb R$, $(f_n)$ une suite de fonctions définies sur $I$, et $f$ définie sur $I$.
+On dit que $(f_n)$ <span class=rougedico>converge uniformément</span> vers $f$ sur $I$ si 
+$$\forall\varepsilon>0,\ \exists n_0\in\mathbb N,\ \forall x\in I,\ \forall n\geq n_0,\ |f_n(x)-f(x)|<\varepsilon.$$
+</div>
+<p class=ntexte>Si on note $\|f_n-f\|_\infty=\sup\{|f_n(x)-f(x)|;\ x\in I\}$, on peut aussi remarquer que $(f_n)$ converge uniformément vers $f$
+si l'on a $\|f_n-f\|_\infty\to 0.$</p>
+
+<p class=dtexte>La précision apportée par  la convergence uniforme par rapport à la convergence simple est la suivante : dire que  $(f_n)$ converge simplement vers $f$ sur $I$
+signifie que, pour tout point $x$ de $I$, $(f_n(x))$ converge vers $f(x)$. La convergence uniforme signifie que, de plus, la convergence a lieu "à la même vitesse" pour tous les points $x$.</p>
+<p class=dtexte> Essayons d'interpréter
+la différence entre la convergence simple et la convergence uniforme sur la figure dynamique suivante : 
+on représente la suite de fonction $f_n(x)=n^a x e^{-nx}$ pour $a=0,5$, $a=1$ ou $a=1,5$. 
+Cette suite de fonctions converge simplement vers la fonction nulle sur l'intervalle $[0,+\infty[$. La bosse correspond à $\|f_n-f\|_\infty$. 
+Dans les trois cas, elle se déplace
+ vers la gauche, 
+ce qui va entraîner la convergence simple de la suite vers 0 : tout point de $]0,+\infty[$ sera à un moment donné à droite de cette bosse,
+ et on aura $f_n(x)$ qui tend vers 0. En revanche, pour $a=1,\!5$, la hauteur de la bosse augmente : il n'y aura donc pas convergence
+uniforme. Pour $a=1$, la hauteur de la bosse reste constante. Il n'y a pas là non plus convergence uniforme. 
+Enfin, si $a=0,\!5$, la bosse s'aplatit, et sa hauteur tend vers 0 :
+ cela signifie que la suite $(f_n)$ converge uniformément vers 0 sur $[0,+\infty[$.</p>
+
+<div class=equation>
+<iframe scrolling="no" src="https://www.geogebra.org/material/iframe/id/U4SQHsuG/width/650/height/443/border/888888/sri/true/sdz/true" width="650px" height="443px" style="border:0px;"> </iframe>
+</div>
+
+<p>&nbsp;&nbsp;La convergence uniforme répond au problème posé pour préserver la continuité :</p>
+<div class=theo>
+<b>Théorème :</b> Si les $(f_n)$ sont des fonctions continues sur $I$, et si elles convergent uniformément vers $f$ sur $I$, alors $f$ est continue sur $I$.
+</div>
+<div>
+			<button class="boutonsvideo" onclick="showSpoiler(this);" ><span>Démonstration en vidéo!</span></button>
+			<div class="inner" style="display:none; padding-top:10px; padding-bottom:10px; justify-content:center; text-align:center; "><iframe width="560" height="315" src="https://www.youtube.com/embed/v9pZbgEYDxk?si=fV17eA30jeraBt9X" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div></div>
+<p class=dtexte>On a aussi les résultats suivants, concernant respectivement l'intégration et la dérivation
+d'une suite de fonctions :</p>
+<div class=theotexte>
+<b>Théorème :</b> Si les $(f_n)$ sont des fonctions continues sur $I=[a,b]$, et si elles convergent uniformément vers $f$ sur $I$, alors on a :
+$$\lim_{n\to+\infty}\int_a^b |f_n(x)-f(x)|dx=0.$$
+</div>
+<p class=ntexte>En particulier, ceci entraîne la permutation limite/intégrale suivante :</p>
+$$\lim_{n\to+\infty}\int_a^b f_n(x)dx=\int_a^b f(x)dx.$$
+La preuve de ce résultat est immédiate, une fois écrite l'inégalité 
+$$\int_a^b |f_n(x)-f(x)|dx\leq (b-a)\|f_n-f\|_\infty.$$
+<div class=theotexte>
+<b>Théorème :</b> Soit $(f_n)$ une suite de fonctions de classe $C^1$ sur $I$. On suppose que :
+<ul>
+<li>il existe $x_0$ dans $I$ tel que $f_n(x_0)$ converge.
+<li>$(f'_n)$ converge uniformément vers une fonction $g$ sur $I$.
+</ul>
+Alors $(f_n)$ converge uniformément vers une fonction $f$ sur $I$, $f$ est $C^1$, et $f'=g$.
+</div>
+Ce théorème se déduit aisément du précédent, en remarquant que
+$$f_n(x)=f_n(x_0)+\int_{x_0}^x f_n'(t)dt$$
+et en passant à la limite.</p>
+<div class=titrepartie>Convergence normale</div>
+<p class=dtexte>Le paragraphe précédent a montré l'importance de la convergence uniforme des suites de fonctions. Hélas,
+prouver que $(f_n)$ converge uniformément vers $f$ n'est pas souvent une chose facile, 
+et en général, il est nécessaire d'étudier $\|f_n-f\|_\infty$. On dispose
+toutefois d'autres méthodes lorsqu'on étudie une série de fonctions $\sum_{n\geq 0}u_n(x)$ : critère des séries alternées,
+comparaison à une intégrale, transformation d'Abel... et surtout convergence normale!
+<div class=theotexte>
+<b>Définition :</b> On dit que la série de fonctions $\sum_{n\geq 0}u_n(x)$  <span class=rougedico>converge normalement</span> 
+sur $I$ si la série (numérique) $\sum_{n\geq 0}\|u_n\|_\infty$ est convergente.
+</div>
+<p class=ntexte>La proposition importante est :</p>
+<div class=theotexte>
+<b>Proposition :</b> Si la série $\sum_{n\geq 0}u_n(x)$ converge normalement sur $I$, 
+alors la suite des sommes partielles $S_N(x)=\sum_{n=0}^N u_n(x)$ converge uniformément
+vers une fonction $S$ sur $I$.
+</div>
+<p class=ntexte>
+En pratique, on majore $u_n(x)$ par une constante $M_n$ qui ne dépend pas de $x$, 
+et on cherche à prouver que la série de terme général $M_n$ converge.</p>
+<div class=savoirplus><img src=https://www.bibmath.net/dico/images/savoirplus.jpg align=left>
+<p>Ces notions de convergence simple et de convergence uniforme sont maintenant bien comprises.
+Il n'en fut pas toujours ainsi. Un mathématicien aussi réputé que Cauchy écrit encore en 1821,
+ dans son <i>Cours d'Analyse</i>
+de l'&Eacute;cole Polytechnique (une référence, pourtant&nbsp;!), que pour toute série de fonctions continues qui converge,
+alors la somme de la série est une fonction continue, sans se préoccuper de convergence uniforme. 
+Abel en 1826 remarquera que c'est faux, en donnant l'exemple de 
+$$\sin(x)-\frac 12\sin(2x)+\frac13\sin(3x)-\cdots$$
+dont la somme n'est pas continue en les points $(2m+1)\pi$ avec $m\in\mathbb Z$.
+C'est Weierstrass vers 1842 qui comprend qu'il faut une condition plus forte, mais malheureusement il ne publie pas son résultat.
+Cauchy revient sur ce sujet en 1853 et énoncé&nbsp;: "si les différents termes de la série $u_0,u_1,\dots$ sont des fonctions
+de la variable réelle $x$, continues par rapport à cette variable, et si la somme $u_n,u_{n+1},\dots,u_{n'}$
+devient toujours infiniment petite pour des valeurs infiniment grandes des nombres entiers $n$ et $n'&gt;n$, la série
+sera convergente et la somme de la série sera une fonction continue de la variable $x$". On reconnaît en filigrane 
+le critère de Cauchy pour la convergence uniforme.</p>
+<p>Finalement, c'est Ulisse Dini, dans son livre <span class=titrelivre>Fondamenti per la teorica delle funzioni</span>,
+qui fournit des démonstrations parfaitement rigoureuses ainsi qu'une définition précise de la convergence uniforme.
+</p>
+</div>
+<div class=titrepartie>Consulter aussi</div><div class=liste><ul><li><a href=index8137.html?action=affiche&amp;quoi=./d/dini.html>Théorèmes de Dini</a><br><li><a href=index066c.html?action=affiche&amp;quoi=./c/convergproba.html>D'autres modes de convergence</a><br><li><a href=https://www.bibmath.net/bios/index.php?action=affiche&amp;quoi=cauchy>Biographie d'Augustin Cauchy</a><br><li><a href=https://www.bibmath.net/bios/index.php?action=affiche&amp;quoi=weierstrass>Biographie de Karl Weierstrass</a><br></ul></div><div class=titrepartie>Recherche alphabétique</div><div class=listedico><div class=circle><a href="https://www.bibmath.net/dico/index.php?action=liste&amp;prem=a&amp;fin=a">A</a></div><div class=circle><a href="https://www.bibmath.net/dico/index.php?action=liste&amp;prem=b&amp;fin=b">B</a></div><div class=circle><a href="https://www.bibmath.net/dico/index.php?action=liste&amp;prem=c&amp;fin=c">C</a></div><div class=circle><a href="https://www.bibmath.net/dico/index.php?action=liste&amp;prem=d&amp;fin=d">D</a></div><div class=circle><a href="https://www.bibmath.net/dico/index.php?action=liste&amp;prem=e&amp;fin=e">E</a></div><div class=circle><a href="https://www.bibmath.net/dico/index.php?action=liste&amp;prem=f&amp;fin=f">F</a></div><div class=circle><a href="https://www.bibmath.net/dico/index.php?action=liste&amp;prem=g&amp;fin=g">G</a></div><div class=circle><a href="https://www.bibmath.net/dico/index.php?action=liste&amp;prem=h&amp;fin=h">H</a></div><div class=circle><a href="https://www.bibmath.net/dico/index.php?action=liste&amp;prem=i&amp;fin=i">I</a></div></div><div class=listedico><div class=circle><a href="https://www.bibmath.net/dico/index.php?action=liste&amp;prem=j&amp;fin=j">J</a></div><div class=circle><a href="https://www.bibmath.net/dico/index.php?action=liste&amp;prem=k&amp;fin=k">K</a></div><div class=circle><a href="https://www.bibmath.net/dico/index.php?action=liste&amp;prem=l&amp;fin=l">L</a></div><div class=circle><a href="https://www.bibmath.net/dico/index.php?action=liste&amp;prem=m&amp;fin=m">M</a></div><div class=circle><a href="https://www.bibmath.net/dico/index.php?action=liste&amp;prem=n&amp;fin=n">N</a></div><div class=circle><a href="https://www.bibmath.net/dico/index.php?action=liste&amp;prem=o&amp;fin=o">O</a></div><div class=circle><a href="https://www.bibmath.net/dico/index.php?action=liste&amp;prem=p&amp;fin=p">P</a></div><div class=circle><a href="https://www.bibmath.net/dico/index.php?action=liste&amp;prem=q&amp;fin=q">Q</a></div><div class=circle><a href="https://www.bibmath.net/dico/index.php?action=liste&amp;prem=r&amp;fin=r">R</a></div></div><div class=listedico><div class=circle><a href="https://www.bibmath.net/dico/index.php?action=liste&amp;prem=s&amp;fin=s">S</a></div><div class=circle><a href="https://www.bibmath.net/dico/index.php?action=liste&amp;prem=t&amp;fin=t">T</a></div><div class=circle><a href="https://www.bibmath.net/dico/index.php?action=liste&amp;prem=u&amp;fin=u">U</a></div><div class=circle><a href="https://www.bibmath.net/dico/index.php?action=liste&amp;prem=v&amp;fin=v">V</a></div><div class=circle><a href="https://www.bibmath.net/dico/index.php?action=liste&amp;prem=w&amp;fin=w">W</a></div><div class=circle><a href="https://www.bibmath.net/dico/index.php?action=liste&amp;prem=x&amp;fin=x">X</a></div><div class=circle><a href="https://www.bibmath.net/dico/index.php?action=liste&amp;prem=y&amp;fin=y">Y</a></div><div class=circle><a href="https://www.bibmath.net/dico/index.php?action=liste&amp;prem=z&amp;fin=z">Z</a></div></div><div class=titrepartie>Recherche thématique</div><div class=listesurdeuxcolonnes><li><a href=https://www.bibmath.net/dico/index.php?action=rub&amp;quoi=200>Algèbre</a></li><li><a href=https://www.bibmath.net/dico/index.php?action=rub&amp;quoi=300>Analyse</a></li><li><a href=https://www.bibmath.net/dico/index.php?action=rub&amp;quoi=700>Applications</a></li><li><a href=https://www.bibmath.net/dico/index.php?action=rub&amp;quoi=600>Arithmétique</a></li><li><a href=https://www.bibmath.net/dico/index.php?action=rub&amp;quoi=500>Probabilité et statistiques</a></li><li><a href=https://www.bibmath.net/dico/index.php?action=rub&amp;quoi=400>Géométrie</a></li><li><a href=https://www.bibmath.net/dico/index.php?action=rub&amp;quoi=100>Fondements</a></li><li><a href=https://www.bibmath.net/dico/index.php?action=rub&amp;quoi=0>Histoire</a></li><li><a href=https://www.bibmath.net/dico/index.php?action=rub&amp;quoi=900>Mathématiques discrètes</a> </li><li><a href=https://www.bibmath.net/dico/index.php?action=rub&amp;quoi=800>Mathématiques interactives</a> </li></div></article></div><aside id="droite"><div class="contenudroite"><h1>
+	Discussions des forums</h1><li><a href="https://www.bibmath.net/forums/viewtopic.php?id=17233&amp;action=new" title="Croissance comparée en spécialité maths">Croissance comparée en sp …</a></li>
+<li><a href="https://www.bibmath.net/forums/viewtopic.php?id=17380&amp;action=new" title="Calcul d&#039;une double intégrale">Calcul d&#039;une double intégrale</a></li>
+<li><a href="https://www.bibmath.net/forums/viewtopic.php?id=17378&amp;action=new" title="Interprétation d&#039;une suite vis à vis de la somme des k(k parmi n)">Interprétation d&#039;une suit …</a></li>
+<li><a href="https://www.bibmath.net/forums/viewtopic.php?id=17379&amp;action=new" title="Prolongement analytique de zéta">Prolongement analytique d …</a></li>
+<li><a href="https://www.bibmath.net/forums/viewtopic.php?id=17376&amp;action=new" title="Énigme Pythagore">Énigme Pythagore</a></li>
+<li><a href="https://www.bibmath.net/forums/viewtopic.php?id=15208&amp;action=new" title="sous-groupe distingué">sous-groupe distingué</a></li>
+<li><a href="https://www.bibmath.net/forums/viewtopic.php?id=17366&amp;action=new" title="Application du théorème des restes chinois">Application du théorème d …</a></li>
+<li><a href="https://www.bibmath.net/forums/viewtopic.php?id=17372&amp;action=new" title="Aide pour trouver des annales ou manuels pour Terminale">Aide pour trouver des ann …</a></li>
+<li><a href="https://www.bibmath.net/forums/viewtopic.php?id=17377&amp;action=new" title="racines carrées de cubes">racines carrées de cubes</a></li>
+<li><a href="https://www.bibmath.net/forums/viewtopic.php?id=17358&amp;action=new" title="Test d&#039;indépendance du Khi-2">Test d&#039;indépendance du Khi-2</a></li>
+<li><a href="https://www.bibmath.net/forums/viewtopic.php?id=2827&amp;action=new" title="[Python]Kit d&#039;aide à la cryptanalyse">[Python]Kit d&#039;aide à la c …</a></li>
+<li><a href="https://www.bibmath.net/forums/viewtopic.php?id=17375&amp;action=new" title="comment creer un logiciel qui crypte de donnee sur l&#039;ordinateur">comment creer un logiciel …</a></li>
+<li><a href="https://www.bibmath.net/forums/viewtopic.php?id=17374&amp;action=new" title="CAPES maths 2025- groupe de travail sur Lyon">CAPES maths 2025- groupe …</a></li>
+<li><a href="https://www.bibmath.net/forums/viewtopic.php?id=17373&amp;action=new" title="Le Triangle caché">Le Triangle caché</a></li>
+<li><a href="https://www.bibmath.net/forums/viewtopic.php?id=17371&amp;action=new" title="Equadiff">Equadiff</a></li>
+<div class=bascontenu><a href="https://www.bibmath.net/forums/">Accéder aux forums</a></div>  </div><div id=pubdroite><div class="r89-desktop-hpa-atf"></div><div class="contenudroite"><h1>Mathématicien du mois</h1><div align=center><img src="https://www.bibmath.net/bios/images/vandermonde.png" class=imgcontenu></div>
+<div align=center>
+<a href="https://www.bibmath.net/bios/index.php?action=affiche&amp;quoi=vandermonde">Alexandre Vandermonde (1735-1796)</a>
+</div><div class=bascontenu><a href="https://www.bibmath.net/bios/index.php">Toutes les biographies</a></div></div></div></aside></div></div><footer id="pied"><div id="piedcentre"><section id="listepied"><span class="item"><a href=https://www.bibmath.net/contact.php>Signaler une erreur/Nous contacter</a></span><span class="item"><a href=https://www.bibmath.net/credits.php>Mentions Légales</a></span><span class="item"><a class="change-consent" onclick="window.__tcfapi('displayConsentUi', 2, function() {} );">Confidentialité</a></section></div></footer><footer id="baspied"><section id="listepied"></section></footer><footer id="piedmobile"><span class="item"><a href=https://www.bibmath.net/contact.php?origine=mobile>Contact</a></span><span class="item"><a class="change-consent" onclick="window.__tcfapi('displayConsentUi', 2, function() {} );">Confidentialité</a><span class="item"><a href=https://www.bibmath.net/credits.php>Mentions légales</a></span></footer><footer id="baspiedmobile"></footer>
+<script>
+var acc = document.getElementsByClassName("titrecours");
+var i;
+
+for (i = 0; i < acc.length; i++) {
+  acc[i].addEventListener("click", function() {
+    /* Toggle between adding and removing the "active" class,
+    to highlight the button that controls the panel */
+    this.classList.toggle("activecours");
+
+    /* Toggle between hiding and showing the active panel */
+    var panel = this.nextElementSibling;
+    if (panel.style.display === "block") {
+      panel.style.display = "none";
+    } else {
+      panel.style.display = "block";
+    }
+  });
+}
+</script>
+
+</body><script type="text/javascript" src="https://www.bibmath.net/common/scrolling.js"></script>
+<!-- Mirrored from www.bibmath.net/dico/index.php?action=affiche&quoi=./c/cvu.html by HTTrack Website Copier/3.x [XR&CO'2014], Tue, 27 Aug 2024 11:11:15 GMT -->
+</html>

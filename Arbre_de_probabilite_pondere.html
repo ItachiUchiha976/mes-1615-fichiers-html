@@ -1,0 +1,332 @@
+<!doctype html><html lang="fr"
+<!-- Mirrored from www.bibmath.net/dico/index.php?action=affiche&quoi=./a/arbreproba.html by HTTrack Website Copier/3.x [XR&CO'2014], Tue, 27 Aug 2024 11:10:55 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=UTF-8" /><!-- /Added by HTTrack -->
+<head><meta charset="utf-8"><script async src="https://tags.refinery89.com/v2/bibmathnet.js"></script><script async src="https://www.googletagmanager.com/gtag/js?id=G-CTYE0T3DYG"></script><script>window.dataLayer = window.dataLayer || [];  function gtag(){dataLayer.push(arguments);}  gtag('js', new Date());  gtag('config', 'G-CTYE0T3DYG');</script>
+<meta name="Author" CONTENT="Fred Bayart"><meta name="Description" CONTENT="Dictionnaire de mathématiques"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Arbre de probabilité pondéré</title><link type="text/css" href="https://www.bibmath.net/css/bibstyle.css" rel="stylesheet" /><script type='text/x-mathjax-config'>
+MathJax.Hub.Config({  tex2jax: {inlineMath: [ ['$','$'], ['\\(','\\)'] ] }, CommonHTML: {
+scale: 90
+} }); </script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_CHTML"></script><script type="text/javascript" src="https://www.bibmath.net/common/fonctions.js"></script></head><body>	<div style="display:none">$$\newcommand{\mtn}{\mathbb{N}}\newcommand{\mtns}{\mathbb{N}^*}\newcommand{\mtz}{\mathbb{Z}}\newcommand{\mtr}{\mathbb{R}}\newcommand{\mtk}{\mathbb{K}}\newcommand{\mtq}{\mathbb{Q}}\newcommand{\mtc}{\mathbb{C}}\newcommand{\mch}{\mathcal{H}}\newcommand{\mcp}{\mathcal{P}}\newcommand{\mcb}{\mathcal{B}}\newcommand{\mcl}{\mathcal{L}}
+\newcommand{\mcm}{\mathcal{M}}\newcommand{\mcc}{\mathcal{C}}
+\newcommand{\mcmn}{\mathcal{M}}\newcommand{\mcmnr}{\mathcal{M}_n(\mtr)}
+\newcommand{\mcmnk}{\mathcal{M}_n(\mtk)}\newcommand{\mcsn}{\mathcal{S}_n}
+\newcommand{\mcs}{\mathcal{S}}\newcommand{\mcd}{\mathcal{D}}
+\newcommand{\mcsns}{\mathcal{S}_n^{++}}\newcommand{\glnk}{GL_n(\mtk)}
+\newcommand{\mnr}{\mathcal{M}_n(\mtr)}\DeclareMathOperator{\ch}{ch}
+\DeclareMathOperator{\sh}{sh}\DeclareMathOperator{\th}{th}
+\DeclareMathOperator{\vect}{vect}\DeclareMathOperator{\card}{card}
+\DeclareMathOperator{\comat}{comat}\DeclareMathOperator{\imv}{Im}
+\DeclareMathOperator{\rang}{rg}\DeclareMathOperator{\Fr}{Fr}
+\DeclareMathOperator{\diam}{diam}\DeclareMathOperator{\supp}{supp}
+\newcommand{\veps}{\varepsilon}\newcommand{\mcu}{\mathcal{U}}
+\newcommand{\mcun}{\mcu_n}\newcommand{\dis}{\displaystyle}
+\newcommand{\croouv}{[\![}\newcommand{\crofer}{]\!]}
+\newcommand{\rab}{\mathcal{R}(a,b)}\newcommand{\pss}[2]{\langle #1,#2\rangle}
+$$</div><header id="bandeau"><div id="bandeaucentre"><span id=bandeaulogo>Bibm@th.net</span><span id=bandeaumilieu><a href="https://www.youtube.com/channel/UCP-LXgvAe7CMdf_dddUcLmw" alt="Visitez notre chaine YouTube" title="Visiter notre chaine YouTube"><img src="https://www.bibmath.net/img/youtube.png" /></a><a href="https://www.facebook.com/bibmath" alt="Consulter notre page FaceBook" title="Consulter notre page Facebook"><img src="https://www.bibmath.net/img/fb.png" /></a><a href="https://www.bibmath.net/forums/login.php" alt="Consulter mon compte" title="Vous n'êtes pas identifié. Identifiez-vous."><img src="https://www.bibmath.net/img/moncompte.png" /></a></span><form id="formrech" name="recherche" action="https://www.bibmath.net/recherche.php"  method="get"><div id=bandeaurecherche>
+	<input name="q" placeholder="Rechercher sur le site..." class="formulairerecherche inputrecherche" />
+	<button class="formulairerecherche boutonrecherche" value="" title="Rechercher"> 
+	<img src="https://www.bibmath.net//img/recherche.png" height=30px>
+	</button></div></form></div></header><header id="bandeaumobile"><div class="sousbandeaumobile"><span class="itembandeaumobile" id="iconeouvremenu"><a href="javascript:ouvremenumobile()"><img src="https://www.bibmath.net/img/menumobile.png" /></a></span><span class="itembandeaumobilefondnoir" id="iconefermemenu"><a href="javascript:fermemenumobile()"><img src="https://www.bibmath.net/img/deletemobile.png"></a></span><span class="itembandeaumobile">Bibm@th</span></div><div class="sousbandeaumobile"><span class="itembandeaumobile"><a href="https://www.bibmath.net/forums/index.php" title="Accéder au forum du site"><img src="https://www.bibmath.net/img/forumgrand.png" /></a></span><span class="itembandeaumobilesansbordure"><a href="https://www.facebook.com/bibmath" alt="Consulter notre page FaceBook" title="Consulter notre page Facebook"><img src="https://www.bibmath.net/img/fbmobile.png" /></a></span><span class="itembandeaumobilesansbordure"><a href="https://www.bibmath.net/forums/login.php" alt="Consulter mon compte" title="Vous n'êtes pas identifié. Identifiez-vous."><img src="https://www.bibmath.net/img/moncomptemobile.png" /></a></span><span class="itembandeaumobile"  id="iconeouvrerecherche"><a href="javascript:ouvrerecherchemobile()"><img src="https://www.bibmath.net/img/loupemobile.png" /></a></span><span class="itembandeaumobilefondnoir" id="iconefermerecherche"><a href="javascript:fermerecherchemobile()"><img src="https://www.bibmath.net/img/deletemobile.png"></a></span></div></header><div id="recherchemobile"><form id="formrecherchemobile" name="recherche" action="https://www.bibmath.net/recherche.php"  method="get"><div class="divinputrecherche"><input name="q" placeholder="Rechercher sur le site..." class="formulairerecherche inputrecherche" /></div><div class="divboutonmobile"><button class="formulairerecherche boutonrecherche" value="" title="Rechercher"> </button></div></form></div><div id="menuetsousmenu"><nav id="menuhaut"><div id="menuhautcentre"><div id="menuhautgauche"><section id="listemenuhaut"><span id="menu0" class="item"><a href="https://www.bibmath.net/index.php"><img src="https://www.bibmath.net/img/maison.png" />Accueil</a></span><span id="menu1" class="item"><a href="javascript:affiche_sousmenu(1);"><img src="https://www.bibmath.net/img/lycee16.png" />Lycée</a></span><span id="menu2" class="item"><a href="javascript:affiche_sousmenu(2);"><img src="https://www.bibmath.net/img/ressources.png" />Supérieur</a></span><span id="menu3" class="item"><a href="javascript:affiche_sousmenu(3);"><img src="https://www.bibmath.net/img/bibliotheques.png" />Bibliothèques</a></span><span id="menu4" class="itemselectionne"><a href="javascript:affiche_sousmenu(4);"><img src="https://www.bibmath.net/img/references.png" />Références</a></span><span id="menu5" class="item"><a href="javascript:affiche_sousmenu(5);"><img src="https://www.bibmath.net/img/themes.png" />Thèmes</a></span><span id="menu6" class="item"><a href="https://www.bibmath.net/forums/index.php"><img src="https://www.bibmath.net/img/forum.png" />Forum</a></span></section></div><div id="menuhautdroite"><section id="listemenuhaut"><span id="menu7" class="item"><a href="https://www.bibmath.net/ressources/moncompte.php"><img src="https://www.bibmath.net/img/profil.png" />Mon compte</a></span></section></div></div></nav><nav id="sousmenuhaut"><div id="sousmenuhautcentre"><section id="listesousmenuhaut"><div class="sousmenucontenu" id="sousmenu_0" style="display:none" ></div><div class="sousmenucontenu" id="sousmenu_1" style="display:none" ><span class="sousmenuitem"><a href="https://www.bibmath.net/ressources/index.php?action=affiche&amp;quoi=college/index">Collège</a></span><span class="sousmenuitem"><a href="https://www.bibmath.net/ressources/index.php?action=affiche&amp;quoi=seconde/index">Seconde</a></span><span class="sousmenuitem"><a href="https://www.bibmath.net/ressources/index.php?action=affiche&amp;quoi=grandoral/index">Grand Oral</a></span></div><div class="sousmenucontenu" id="sousmenu_2" style="display:none" ><span class="sousmenuitem"><a href="https://www.bibmath.net/ressources/index.php?action=affiche&amp;quoi=mpsi/index">Math Sup</a></span><span class="sousmenuitem"><a href="https://www.bibmath.net/ressources/index.php?action=affiche&amp;quoi=mathspe/index">Math Spé</a></span><span class="sousmenuitem"><a href="https://www.bibmath.net/ressources/index.php?action=affiche&amp;quoi=capes/index">Capes</a></span><span class="sousmenuitem"><a href="https://www.bibmath.net/ressources/index.php?action=affiche&amp;quoi=agreginterne/index">Agreg interne</a></span><span class="sousmenuitem"><a href="https://www.bibmath.net/ressources/index.php?action=affiche&amp;quoi=bts/index">BTS</a></span></div><div class="sousmenucontenu" id="sousmenu_3" style="display:none" ><span class="sousmenuitem"><a href="https://www.bibmath.net/ressources/index.php?action=affiche&amp;quoi=bde/index">Bibliothèque d'exercices</a></span><span class="sousmenuitem"><a href="https://www.bibmath.net/pbs/index.php">Bibliothèque de problèmes</a></span><span class="sousmenuitem"><a href="https://www.bibmath.net/quizz/index.php">Automatismes</a></span></div><div class="sousmenucontenu" id="sousmenu_4" style="display:flex" ><span class="sousmenuitemselectionne"><a href="https://www.bibmath.net/dico/index.php">Dictionnaire</a></span><span class="sousmenuitem"><a href="https://www.bibmath.net/bios/index.php">Biographie de mathématiciens</a></span><span class="sousmenuitem"><a href="https://www.bibmath.net/formulaire/index.php">Formulaire</a></span><span class="sousmenuitem"><a href="https://www.bibmath.net/trans/index.php">Lexique français/anglais</a></span></div><div class="sousmenucontenu" id="sousmenu_5" style="display:none" ><span class="sousmenuitem"><a href="https://www.bibmath.net/crypto/index.php">Cryptographie et codes secrets</a></span><span class="sousmenuitem"><a href="https://www.bibmath.net/jeux/index.php">Jeux et énigmes</a></span><span class="sousmenuitem"><a href="https://www.bibmath.net/carres/index.php?action=affiche&amp;quoi=carres">Carrés magiques</a></span><span class="sousmenuitem"><a href="https://www.bibmath.net/quotidien/index.php">Mathématiques au quotidien</a></span><span class="sousmenuitem"><a href="https://www.bibmath.net/dossiers/index.php">Dossiers</a></span></div><div class="sousmenucontenu" id="sousmenu_6" style="display:none" ></div><div class="sousmenucontenu" id="sousmenu_7" style="display:none" ></div></section></div></nav><nav id="menumobile"><div class="itemmenumobile"><div class="teteitemmenumobile"><span><a href="https://www.bibmath.net/index.php">Accueil</a></span><img src="https://www.bibmath.net/img/flechemenumobileferme.png" id="sousmenumobileimageferme0"  /><img src="https://www.bibmath.net/img/flechemenumobileouvert.png" id="sousmenumobileimageouvert0"  style="display:none;"/></div></div><div class="itemmenumobile"><div class="teteitemmenumobile"><span><a href="javascript:affiche_sousmenumobile(1);">Lycée</a></span><img src="https://www.bibmath.net/img/flechemenumobileferme.png" id="sousmenumobileimageferme1"  /><img src="https://www.bibmath.net/img/flechemenumobileouvert.png" id="sousmenumobileimageouvert1"  style="display:none;"/></div><div class="sousmenumobile" id="sousmenumobile1"><div class="sousitemmenumobile"><span><a href="https://www.bibmath.net/ressources/index.php?action=affiche&amp;quoi=college/index">Collège</a></span></div><div class="sousitemmenumobile"><span><a href="https://www.bibmath.net/ressources/index.php?action=affiche&amp;quoi=seconde/index">Seconde</a></span></div><div class="sousitemmenumobile"><span><a href="https://www.bibmath.net/ressources/index.php?action=affiche&amp;quoi=grandoral/index">Grand Oral</a></span></div></div></div><div class="itemmenumobile"><div class="teteitemmenumobile"><span><a href="javascript:affiche_sousmenumobile(2);">Supérieur</a></span><img src="https://www.bibmath.net/img/flechemenumobileferme.png" id="sousmenumobileimageferme2"  /><img src="https://www.bibmath.net/img/flechemenumobileouvert.png" id="sousmenumobileimageouvert2"  style="display:none;"/></div><div class="sousmenumobile" id="sousmenumobile2"><div class="sousitemmenumobile"><span><a href="https://www.bibmath.net/ressources/index.php?action=affiche&amp;quoi=mpsi/index">Math Sup</a></span></div><div class="sousitemmenumobile"><span><a href="https://www.bibmath.net/ressources/index.php?action=affiche&amp;quoi=mathspe/index">Math Spé</a></span></div><div class="sousitemmenumobile"><span><a href="https://www.bibmath.net/ressources/index.php?action=affiche&amp;quoi=capes/index">Capes</a></span></div><div class="sousitemmenumobile"><span><a href="https://www.bibmath.net/ressources/index.php?action=affiche&amp;quoi=agreginterne/index">Agreg interne</a></span></div><div class="sousitemmenumobile"><span><a href="https://www.bibmath.net/ressources/index.php?action=affiche&amp;quoi=bts/index">BTS</a></span></div></div></div><div class="itemmenumobile"><div class="teteitemmenumobile"><span><a href="javascript:affiche_sousmenumobile(3);">Bibliothèques</a></span><img src="https://www.bibmath.net/img/flechemenumobileferme.png" id="sousmenumobileimageferme3"  /><img src="https://www.bibmath.net/img/flechemenumobileouvert.png" id="sousmenumobileimageouvert3"  style="display:none;"/></div><div class="sousmenumobile" id="sousmenumobile3"><div class="sousitemmenumobile"><span><a href="https://www.bibmath.net/ressources/index.php?action=affiche&amp;quoi=bde/index">Bibliothèque d'exercices</a></span></div><div class="sousitemmenumobile"><span><a href="https://www.bibmath.net/pbs/index.php">Bibliothèque de problèmes</a></span></div><div class="sousitemmenumobile"><span><a href="https://www.bibmath.net/quizz/index.php">Automatismes</a></span></div></div></div><div class="itemmenumobileselectionne"><div class="teteitemmenumobile"><span><a href="javascript:affiche_sousmenumobile(4);">Références</a></span><img src="https://www.bibmath.net/img/flechemenumobileferme.png" id="sousmenumobileimageferme4"  /><img src="https://www.bibmath.net/img/flechemenumobileouvert.png" id="sousmenumobileimageouvert4"  style="display:none;"/></div><div class="sousmenumobile" id="sousmenumobile4"><div class="sousitemmenumobile"><span><a href="https://www.bibmath.net/dico/index.php">Dictionnaire</a></span></div><div class="sousitemmenumobile"><span><a href="https://www.bibmath.net/bios/index.php">Biographie de mathématiciens</a></span></div><div class="sousitemmenumobile"><span><a href="https://www.bibmath.net/formulaire/index.php">Formulaire</a></span></div><div class="sousitemmenumobile"><span><a href="https://www.bibmath.net/trans/index.php">Lexique français/anglais</a></span></div></div></div><div class="itemmenumobile"><div class="teteitemmenumobile"><span><a href="javascript:affiche_sousmenumobile(5);">Thèmes</a></span><img src="https://www.bibmath.net/img/flechemenumobileferme.png" id="sousmenumobileimageferme5"  /><img src="https://www.bibmath.net/img/flechemenumobileouvert.png" id="sousmenumobileimageouvert5"  style="display:none;"/></div><div class="sousmenumobile" id="sousmenumobile5"><div class="sousitemmenumobile"><span><a href="https://www.bibmath.net/crypto/index.php">Cryptographie et codes secrets</a></span></div><div class="sousitemmenumobile"><span><a href="https://www.bibmath.net/jeux/index.php">Jeux et énigmes</a></span></div><div class="sousitemmenumobile"><span><a href="https://www.bibmath.net/carres/index.php?action=affiche&amp;quoi=carres">Carrés magiques</a></span></div><div class="sousitemmenumobile"><span><a href="https://www.bibmath.net/quotidien/index.php">Mathématiques au quotidien</a></span></div><div class="sousitemmenumobile"><span><a href="https://www.bibmath.net/dossiers/index.php">Dossiers</a></span></div></div></div><div class="itemmenumobile"><div class="teteitemmenumobile"><span><a href="https://www.bibmath.net/forums/index.php">Forum</a></span><img src="https://www.bibmath.net/img/flechemenumobileferme.png" id="sousmenumobileimageferme6"  /><img src="https://www.bibmath.net/img/flechemenumobileouvert.png" id="sousmenumobileimageouvert6"  style="display:none;"/></div></div><div class="itemmenumobile"><div class="teteitemmenumobile"><span><a href="https://www.bibmath.net/ressources/moncompte.php">Mon compte</a></span><img src="https://www.bibmath.net/img/flechemenumobileferme.png" id="sousmenumobileimageferme7"  /><img src="https://www.bibmath.net/img/flechemenumobileouvert.png" id="sousmenumobileimageouvert7"  style="display:none;"/></div></div></nav></div><div id="main"><div id="maincentre"><div id="gauche"><div id="pubhaute"><div class="r89-desktop-leaderboard-atf"></div><div style="min-height:280px;" class="r89-mobile-billboard-top"></div></div><article id="contenugauche"><div class="chemin"><a href="https://www.bibmath.net/dico/index.php">Dictionnaire de mathématiques</a> &gt; <a href="https://www.bibmath.net/dico/index.php?action=rub&amp;quoi=500">Probabilité et statistiques</a> &gt; <a href="https://www.bibmath.net/dico/index.php?action=rub&amp;quoi=502">Probabilité</a> &gt; </div><div class="chemin"><a href="https://www.bibmath.net/dico/index.php">Dictionnaire de mathématiques</a> &gt; <a href="https://www.bibmath.net/dico/index.php?action=rub&amp;quoi=800">Mathématiques interactives</a> &gt; </div><h1>Arbre de probabilité pondéré</h1><p class=utexte>Un <span class=rougedico>arbre de probabilité</span> est un arbre permettant de modéliser 
+une expérience aléatoire et de déterminer la probabilité de certains événements complexes. Il est particulièrement 
+bien adapté aux situations correspondant à l'enchaînement de deux ou plusieurs expériences aléatoires, la probabilité des issues 
+de la seconde expérience dépendant du résultat de la première.</p>
+<p class=utexte>Commençons par un exemple. On dispose de lampes issues de deux lots, le lot A et le lot B. 70% des lampes
+sont issues du lot A, et 30% du lot B. On sait de plus que la probabilité qu'une lampe issue du lot A soit valide est de 0,9, alors
+que la probabilité qu'une lampe issue du lot B soit valide est de 0,94. Si on prend une lampe au hasard, quelle est la probabilité
+qu'elle présente un défaut?</p>
+<p class=utexte>On représente cette situation par un arbre. De la racine partent deux branches, vers les deux feuilles "Lot A" et "Lot B". 
+Sur chacune des branches, on écrit la probabilité de l'événement correspondant : "appartenir au lot A" et "appartenir au lot B". Ensuite, 
+de chaque feuille "Lot A" et "Lot B", on fait partir deux branches, vers deux feuilles correspond aux événements V="être valide"
+et D="avoir un défaut". Sur chaque branche, on écrit la probabilité conditionnelle que l'événement terminal se réalise sachant que l'événement
+intermédiaire est réalisé. On trouve donc :</p>
+<div class=equation>
+ <svg width="400" height="200"> 
+<rect x="0" y="0" width="400" height="200" style="fill:#ffffff" />
+<text x="100" y="104.2" font-size="14" fill="black" text-anchor="middle">Lot A</text>
+<text x="300" y="104.2" font-size="14" fill="black" text-anchor="middle">Lot B</text>
+<text x="50" y="187.5" font-size="14" fill="black" text-anchor="middle">V</text>
+<text x="150" y="187.5" font-size="14" fill="black" text-anchor="middle">D</text>
+<text x="250" y="187.5" font-size="14" fill="black" text-anchor="middle">V</text>
+<text x="350" y="187.5" font-size="14" fill="black" text-anchor="middle">D</text>
+<line x1="187.5" y1="27.1" x2="150" y2="58.3" style="stroke:black; stroke-width:1" />
+<text x="142.5" y="67.3" font-size="9" fill="black" text-anchor="middle">0,7</text>
+<line x1="135" y1="70.8" x2="112.5" y2="89.6" style="stroke:black; stroke-width:1" />
+<line x1="212.5" y1="27.1" x2="250" y2="58.3" style="stroke:black; stroke-width:1" />
+<text x="257.5" y="67.3" font-size="9" fill="black" text-anchor="middle">0,3</text>
+<line x1="265" y1="70.8" x2="287.5" y2="89.6" style="stroke:black; stroke-width:1" />
+<line x1="93.8" y1="110.4" x2="75" y2="141.7" style="stroke:black; stroke-width:1" />
+<text x="71.3" y="150.6" font-size="9" fill="black" text-anchor="middle">0,9</text>
+<line x1="67.5" y1="154.2" x2="56.3" y2="172.9" style="stroke:black; stroke-width:1" />
+<line x1="106.3" y1="110.4" x2="125" y2="141.7" style="stroke:black; stroke-width:1" />
+<text x="128.8" y="150.6" font-size="9" fill="black" text-anchor="middle">0,1</text>
+<line x1="132.5" y1="154.2" x2="143.8" y2="172.9" style="stroke:black; stroke-width:1" />
+<line x1="293.8" y1="110.4" x2="275" y2="141.7" style="stroke:black; stroke-width:1" />
+<text x="271.3" y="150.6" font-size="9" fill="black" text-anchor="middle">0,94</text>
+<line x1="267.5" y1="154.2" x2="256.3" y2="172.9" style="stroke:black; stroke-width:1" />
+<line x1="306.3" y1="110.4" x2="325" y2="141.7" style="stroke:black; stroke-width:1" />
+<text x="328.8" y="150.6" font-size="9" fill="black" text-anchor="middle">0,06</text>
+<line x1="332.5" y1="154.2" x2="343.8" y2="172.9" style="stroke:black; stroke-width:1" />
+</svg>
+</div>
+<p class=utexte>Les probabilités des événements intersection s'obtiennent en effectuant le produit des probabilités des différentes
+branches qui amènent à ces événements. Par exemple, si on cherche la probabilité d'être dans le lot A et d'être défaillant, on trouve
+$0,7\times0,1=0,07$. De même, la probabilité d'être dans le lot B et d'être défaillant vaut $0,3\times 0,06=0,018$. Et finalement, la probabilité
+d'être défaillent est $0,07+0,018=0,088$.</p>
+<p class=utexte>Plus généralement, un arbre de probabilité de profondeur deux est défini de la façon suivante. Soit $\Omega$ l'univers de
+l'expérience aléatoire. Soit $A_1,\dots,A_p$ et $B_1,\dots,B_q$ deux systèmes complets d'événements.
+La racine de l'arbre correspondant à $\Omega$. De cette racine, on fait partir $p$ branches vers les noeuds $A_1,\dots,A_p$. Sur chaque 
+branche, on écrit la probabilité $P(A_i)$ que l'événement se réalise. De chacun
+des noeuds $A_1,\dots,A_p$, on fait partir $q$ branches vers les feuilles $B_1,\dots,B_q$. Sur la branche liant le noeud $A_i$ à la feuille
+$B_j$, on écrit la probabilité condionnelle $P_{A_i}(B_j)$.</p>
+<p class=utexte>Le script suivant, créé par Alain Busser de l'Irem de la Réunion, permet d'automatiser les calculs
+réalisés avec un arbre de probabilité de profondeur 2.</p>
+<link rel="stylesheet" href="http://code.jquery.com/ui/1.10.2/themes/smoothness/jquery-ui.css" />
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/coffee-script/1.4.0/coffee-script.min.js"></script>
+  <script src="http://code.jquery.com/jquery-1.7.2.min.js"></script>
+  <script src="http://code.jquery.com/ui/1.8.21/jquery-ui.min.js"></script>
+  <script src="https://raw.github.com/furf/jquery-ui-touch-punch/master/jquery.ui.touch-punch.min.js"></script>
+  <link rel="stylesheet" href="http://code.jquery.com/mobile/1.3.1/jquery.mobile-1.3.1.min.css"/>
+   <style>
+   #cpA .ui-slider-range.ui-widget-header {background: lightgreen; } 
+   #cpnA .ui-slider-range.ui-widget-header {background: lightgreen; } 
+   #cpBA .ui-slider-range.ui-widget-header {background: red; } 
+   #cpnBA .ui-slider-range.ui-widget-header {background: lightblue; } 
+   #cpBnA .ui-slider-range.ui-widget-header {background: red; } 
+   #cpnBnA .ui-slider-range.ui-widget-header {background: lightblue; } 
+   .bar {text-decoration: overline}
+   .pvert, .qvert {color: darkgreen; }
+   .prouge, .qrouge, .aAB, .anAB, .aB {color: darkred; }
+   .pbleu, .qbleu, .aAnB, .anAnB, .anB {color: darkblue; }
+   </style>
+   <script type="text/coffeescript">
+###
+logiciel libre sous licence MIT
+auteur: Alain Busser
+date: 27 mai 2013
+###
+
+
+affichage = ->
+	$( ".aAB" ).text (Math.round 10000*pA*pBA)/10000
+	$( ".anAB" ).text (Math.round 10000*pnA*pBnA)/10000
+	$( ".aB" ).text (Math.round 10000*(pA*pBA+pnA*pBnA))/10000
+	$( ".aAnB" ).text (Math.round 10000*pA*pnBA)/10000
+	$( ".anAnB" ).text (Math.round 10000*pnA*pnBnA)/10000
+	$( ".anB" ).text (Math.round 10000*(pA*pnBA+pnA*pnBnA))/10000
+
+pA=0.6
+pnA=0.4
+pBA=0.75
+pnBA=0.25
+pBnA=0.7
+pnBnA=0.3
+$ ->
+	$( "#cpA" ).width 100
+	$( "#cpA" ).height 10
+	$( "#cpA" ).slider
+		orientation: "horizontal"
+		range: "min"
+		min: 0
+		max: 100
+		value: 60
+		slide: (event,ui) ->
+			pA=ui.value/100
+			$( ".pvert").text pA
+			pnA=(100-Math.round 100*pA)/100
+			$( ".qvert").text pnA
+			$( "#cpnA" ).slider "value", 100*pnA
+			affichage()
+	$( "#cpnA" ).width 100
+	$( "#cpnA" ).height 10
+	$( "#cpnA" ).slider
+		orientation: "horizontal"
+		range: "min"
+		min: 0
+		max: 100
+		value: 40
+		slide: (event,ui) ->
+			pnA=ui.value/100
+			pA=(100-Math.round 100*pnA)/100
+			$( ".qvert").text pnA
+			$( ".pvert").text pA
+			$( "#cpA" ).slider "value", 100*pA
+			affichage()
+	$( "#cpBA" ).width 100
+	$( "#cpBA" ).height 10
+	$( "#cpBA" ).slider
+		orientation: "horizontal"
+		range: "min"
+		min: 0
+		max: 100
+		value: 75
+		slide: (event,ui) ->
+			pBA=ui.value/100
+			pnBA=(100-Math.round 100*pBA)/100
+			$( ".prouge").text pBA
+			$( ".pbleu").text pnBA
+			$( "#cpnBA").slider "value", 100*pnBA
+			affichage()
+	$( "#cpnBA" ).width 100
+	$( "#cpnBA" ).height 10
+	$( "#cpnBA" ).slider
+		orientation: "horizontal"
+		range: "min"
+		min: 0
+		max: 100
+		value: 25
+		slide: (event,ui) ->
+			pnBA=ui.value/100
+			pBA=(100-Math.round 100*pnBA)/100
+			$( ".prouge").text pBA
+			$( ".pbleu").text pnBA
+			$( "#cpBA").slider "value", 100*pBA
+			affichage()
+	$( "#cpBnA" ).width 100
+	$( "#cpBnA" ).height 10
+	$( "#cpBnA" ).slider
+		orientation: "horizontal"
+		range: "min"
+		min: 0
+		max: 100
+		value: 70
+		slide: (event,ui) ->
+			pBnA=ui.value/100
+			pnBnA=(100-Math.round 100*pBnA)/100
+			$( ".qrouge").text pBnA
+			$( ".qbleu").text pnBnA
+			$( "#cpnBnA").slider "value", 100*pnBnA
+			affichage()
+	$( "#cpnBnA" ).width 100
+	$( "#cpnBnA" ).height 10
+	$( "#cpnBnA" ).slider
+		orientation: "horizontal"
+		range: "min"
+		min: 0
+		max: 100
+		value: 30
+		slide: (event,ui) ->
+			pnBnA=ui.value/100
+			pBnA=(100-Math.round 100*pnBnA)/100
+			$( ".qrouge").text pBnA
+			$( ".qbleu").text pnBnA
+			$( "#cpBnA").slider "value", 100*pBnA
+			affichage()
+	
+</script>
+<div class=equation>
+<svg xmlns="http://www.w3.org/2000/svg" width="440" height="340">
+<line x1="10.0" y1="165.0" x2="190.0" y2="70.0" style="stroke: darkgreen; stroke-linecap: round; stroke-width:6"/>
+<text x="195" y="70.0" style="font-size: 24; fill: darkgreen; font-weight: normal">A</text>
+<foreignObject x="40" y="70" width="120" height="30">
+<div id="cpA"></div>
+</foreignObject>
+<foreignObject x="100" y="120" width="40" height="20"><span class="pvert" id="affpA">0.6</span></foreignObject>
+<line x1="10.0" y1="175.0" x2="190.0" y2="265.0" style="stroke: darkgreen; stroke-linecap: round; stroke-width:6"/>
+<line x1="195" y1="250" x2="210" y2="250" style="stroke: darkgreen; stroke-width:1"/>
+<text x="195" y="270.0" style="font-size: 24; fill: darkgreen; font-weight: normal">A</text>
+<foreignObject x="40" y="240" width="120" height="30">
+<div id="cpnA"></div>
+</foreignObject>
+<foreignObject x="100" y="200" width="40" height="20"><span class="qvert" id="affpnA">0.4</span></foreignObject>
+<line x1="220.0" y1="60.0" x2="410.0" y2="20.0" style="stroke: darkred; stroke-linecap: round; stroke-width:6"/>
+<foreignObject x="260" y="0" width="120" height="30">
+<div id="cpBA"></div>
+</foreignObject>
+<foreignObject x="300" y="50" width="40" height="20"><span class="prouge" id="affpBA">0.75</span></foreignObject>
+<text x="420" y="20.0" style="font-size: 24; fill: darkred; font-weight: normal">B</text>
+<line x1="220.0" y1="70.0" x2="410.0" y2="120.0" style="stroke: darkblue; stroke-linecap: round; stroke-width:6"/>
+<foreignObject x="260" y="105" width="120" height="30">
+<div id="cpnBA"></div>
+</foreignObject>
+<foreignObject x="300" y="70" width="40" height="20"><span class="pbleu" id="affpnBA">0.25</span></foreignObject>
+<line x1="420.0" y1="105.0" x2="435.0" y2="105.0" style="stroke: darkblue; stroke-width:1"/>
+<text x="420" y="125.0" style="font-size: 24; fill: darkblue; font-weight: normal">B</text>
+<line x1="220.0" y1="260.0" x2="410.0" y2="220.0" style="stroke: darkred; stroke-linecap: round; stroke-width:6"/>
+<foreignObject x="260" y="200" width="120" height="30">
+<div id="cpBnA"></div>
+</foreignObject>
+<foreignObject x="300" y="250" width="40" height="20"><span class="qrouge" id="affpBnA">0.7</span></foreignObject>
+<text x="420" y="220.0" style="font-size: 24; fill: darkred; font-weight: normal">B</text>
+<line x1="220.0" y1="270.0" x2="410.0" y2="320.0" style="stroke: darkblue; stroke-linecap: round; stroke-width:6"/>
+<foreignObject x="260" y="305" width="120" height="30">
+<div id="cpnBnA"></div>
+</foreignObject>
+<foreignObject x="300" y="270" width="40" height="20"><span class="qbleu" id="affpnBnA">0.3</span></foreignObject>
+<line x1="420.0" y1="305.0" x2="435.0" y2="305.0" style="stroke: darkblue; stroke-width:1"/>
+<text x="420" y="325.0" style="font-size: 24; fill: darkblue; font-weight: normal">B</text>
+</svg>
+</div>
+
+<p>Actuellement, on a </p>
+<div class=liste>
+<ul><li>$P(A)=$<span class="pvert">0.6</span> 
+et $P(\bar A)=$<span class="qvert">0.4</span>.</li>
+<li>$P_A(B)=$<span class="prouge">0.75</span> et 
+$P_A(\bar B)=$<span class="pbleu">0.25</span>.</li>
+<li>$P_{\bar A}(B)=$<span class="qrouge">0.7</span> et 
+$P_{\bar A}(\bar B)=$
+<span class="qbleu">0.3</span>.</li>
+</ul>
+</div>
+<p class=ntexte>Alors 
+<div class=liste>
+<ul>
+<li>$P(A\cap B)=$<span class="pvert">0.6</span>&times;
+<span class="prouge">0.75</span>=<span class="aAB">0.45</span>, et 
+$P(\bar A\cap B)=$<span class="qvert">0.4</span>&times;
+<span class="qrouge">0.7</span>=<span class="anAB">0.28</span>, d'où 
+$P(B)=$<span class="aAB">0.45</span>+<span class="anAB">0.28</span>=
+<span class="aB">0.73</span></li>
+<li>$P(A\cap\bar B)=$<span class="pvert">0.6</span>&times;
+<span class="pbleu">0.25</span>=<span class="aAnB">0.15</span>, et 
+$P(\bar A\cap\bar B)=$<span class="qvert">0.4</span>&times;
+<span class="qbleu">0.3</span>=<span class="anAnB">0.12</span>, d'où 
+$P(\bar B)=$<span class="aAnB">0.15</span>+<span class="anAnB">0.12</span>=
+<span class="anB">0.27</span></li>
+</ul>
+</div>
+
+
+</corps><div class=titrepartie>Recherche alphabétique</div><div class=listedico><div class=circle><a href="https://www.bibmath.net/dico/index.php?action=liste&amp;prem=a&amp;fin=a">A</a></div><div class=circle><a href="https://www.bibmath.net/dico/index.php?action=liste&amp;prem=b&amp;fin=b">B</a></div><div class=circle><a href="https://www.bibmath.net/dico/index.php?action=liste&amp;prem=c&amp;fin=c">C</a></div><div class=circle><a href="https://www.bibmath.net/dico/index.php?action=liste&amp;prem=d&amp;fin=d">D</a></div><div class=circle><a href="https://www.bibmath.net/dico/index.php?action=liste&amp;prem=e&amp;fin=e">E</a></div><div class=circle><a href="https://www.bibmath.net/dico/index.php?action=liste&amp;prem=f&amp;fin=f">F</a></div><div class=circle><a href="https://www.bibmath.net/dico/index.php?action=liste&amp;prem=g&amp;fin=g">G</a></div><div class=circle><a href="https://www.bibmath.net/dico/index.php?action=liste&amp;prem=h&amp;fin=h">H</a></div><div class=circle><a href="https://www.bibmath.net/dico/index.php?action=liste&amp;prem=i&amp;fin=i">I</a></div></div><div class=listedico><div class=circle><a href="https://www.bibmath.net/dico/index.php?action=liste&amp;prem=j&amp;fin=j">J</a></div><div class=circle><a href="https://www.bibmath.net/dico/index.php?action=liste&amp;prem=k&amp;fin=k">K</a></div><div class=circle><a href="https://www.bibmath.net/dico/index.php?action=liste&amp;prem=l&amp;fin=l">L</a></div><div class=circle><a href="https://www.bibmath.net/dico/index.php?action=liste&amp;prem=m&amp;fin=m">M</a></div><div class=circle><a href="https://www.bibmath.net/dico/index.php?action=liste&amp;prem=n&amp;fin=n">N</a></div><div class=circle><a href="https://www.bibmath.net/dico/index.php?action=liste&amp;prem=o&amp;fin=o">O</a></div><div class=circle><a href="https://www.bibmath.net/dico/index.php?action=liste&amp;prem=p&amp;fin=p">P</a></div><div class=circle><a href="https://www.bibmath.net/dico/index.php?action=liste&amp;prem=q&amp;fin=q">Q</a></div><div class=circle><a href="https://www.bibmath.net/dico/index.php?action=liste&amp;prem=r&amp;fin=r">R</a></div></div><div class=listedico><div class=circle><a href="https://www.bibmath.net/dico/index.php?action=liste&amp;prem=s&amp;fin=s">S</a></div><div class=circle><a href="https://www.bibmath.net/dico/index.php?action=liste&amp;prem=t&amp;fin=t">T</a></div><div class=circle><a href="https://www.bibmath.net/dico/index.php?action=liste&amp;prem=u&amp;fin=u">U</a></div><div class=circle><a href="https://www.bibmath.net/dico/index.php?action=liste&amp;prem=v&amp;fin=v">V</a></div><div class=circle><a href="https://www.bibmath.net/dico/index.php?action=liste&amp;prem=w&amp;fin=w">W</a></div><div class=circle><a href="https://www.bibmath.net/dico/index.php?action=liste&amp;prem=x&amp;fin=x">X</a></div><div class=circle><a href="https://www.bibmath.net/dico/index.php?action=liste&amp;prem=y&amp;fin=y">Y</a></div><div class=circle><a href="https://www.bibmath.net/dico/index.php?action=liste&amp;prem=z&amp;fin=z">Z</a></div></div><div class=titrepartie>Recherche thématique</div><div class=listesurdeuxcolonnes><li><a href=https://www.bibmath.net/dico/index.php?action=rub&amp;quoi=200>Algèbre</a></li><li><a href=https://www.bibmath.net/dico/index.php?action=rub&amp;quoi=300>Analyse</a></li><li><a href=https://www.bibmath.net/dico/index.php?action=rub&amp;quoi=700>Applications</a></li><li><a href=https://www.bibmath.net/dico/index.php?action=rub&amp;quoi=600>Arithmétique</a></li><li><a href=https://www.bibmath.net/dico/index.php?action=rub&amp;quoi=500>Probabilité et statistiques</a></li><li><a href=https://www.bibmath.net/dico/index.php?action=rub&amp;quoi=400>Géométrie</a></li><li><a href=https://www.bibmath.net/dico/index.php?action=rub&amp;quoi=100>Fondements</a></li><li><a href=https://www.bibmath.net/dico/index.php?action=rub&amp;quoi=0>Histoire</a></li><li><a href=https://www.bibmath.net/dico/index.php?action=rub&amp;quoi=900>Mathématiques discrètes</a> </li><li><a href=https://www.bibmath.net/dico/index.php?action=rub&amp;quoi=800>Mathématiques interactives</a> </li></div></article></div><aside id="droite"><div class="contenudroite"><h1>
+	Discussions des forums</h1><li><a href="https://www.bibmath.net/forums/viewtopic.php?id=17233&amp;action=new" title="Croissance comparée en spécialité maths">Croissance comparée en sp …</a></li>
+<li><a href="https://www.bibmath.net/forums/viewtopic.php?id=17380&amp;action=new" title="Calcul d&#039;une double intégrale">Calcul d&#039;une double intégrale</a></li>
+<li><a href="https://www.bibmath.net/forums/viewtopic.php?id=17378&amp;action=new" title="Interprétation d&#039;une suite vis à vis de la somme des k(k parmi n)">Interprétation d&#039;une suit …</a></li>
+<li><a href="https://www.bibmath.net/forums/viewtopic.php?id=17379&amp;action=new" title="Prolongement analytique de zéta">Prolongement analytique d …</a></li>
+<li><a href="https://www.bibmath.net/forums/viewtopic.php?id=17376&amp;action=new" title="Énigme Pythagore">Énigme Pythagore</a></li>
+<li><a href="https://www.bibmath.net/forums/viewtopic.php?id=15208&amp;action=new" title="sous-groupe distingué">sous-groupe distingué</a></li>
+<li><a href="https://www.bibmath.net/forums/viewtopic.php?id=17366&amp;action=new" title="Application du théorème des restes chinois">Application du théorème d …</a></li>
+<li><a href="https://www.bibmath.net/forums/viewtopic.php?id=17372&amp;action=new" title="Aide pour trouver des annales ou manuels pour Terminale">Aide pour trouver des ann …</a></li>
+<li><a href="https://www.bibmath.net/forums/viewtopic.php?id=17377&amp;action=new" title="racines carrées de cubes">racines carrées de cubes</a></li>
+<li><a href="https://www.bibmath.net/forums/viewtopic.php?id=17358&amp;action=new" title="Test d&#039;indépendance du Khi-2">Test d&#039;indépendance du Khi-2</a></li>
+<li><a href="https://www.bibmath.net/forums/viewtopic.php?id=2827&amp;action=new" title="[Python]Kit d&#039;aide à la cryptanalyse">[Python]Kit d&#039;aide à la c …</a></li>
+<li><a href="https://www.bibmath.net/forums/viewtopic.php?id=17375&amp;action=new" title="comment creer un logiciel qui crypte de donnee sur l&#039;ordinateur">comment creer un logiciel …</a></li>
+<li><a href="https://www.bibmath.net/forums/viewtopic.php?id=17374&amp;action=new" title="CAPES maths 2025- groupe de travail sur Lyon">CAPES maths 2025- groupe …</a></li>
+<li><a href="https://www.bibmath.net/forums/viewtopic.php?id=17373&amp;action=new" title="Le Triangle caché">Le Triangle caché</a></li>
+<li><a href="https://www.bibmath.net/forums/viewtopic.php?id=17371&amp;action=new" title="Equadiff">Equadiff</a></li>
+<div class=bascontenu><a href="https://www.bibmath.net/forums/">Accéder aux forums</a></div>  </div><div id=pubdroite><div class="r89-desktop-hpa-atf"></div><div class="contenudroite"><h1>Mathématicien du mois</h1><div align=center><img src="https://www.bibmath.net/bios/images/vandermonde.png" class=imgcontenu></div>
+<div align=center>
+<a href="https://www.bibmath.net/bios/index.php?action=affiche&amp;quoi=vandermonde">Alexandre Vandermonde (1735-1796)</a>
+</div><div class=bascontenu><a href="https://www.bibmath.net/bios/index.php">Toutes les biographies</a></div></div></div></aside></div></div><footer id="pied"><div id="piedcentre"><section id="listepied"><span class="item"><a href=https://www.bibmath.net/contact.php>Signaler une erreur/Nous contacter</a></span><span class="item"><a href=https://www.bibmath.net/credits.php>Mentions Légales</a></span><span class="item"><a class="change-consent" onclick="window.__tcfapi('displayConsentUi', 2, function() {} );">Confidentialité</a></section></div></footer><footer id="baspied"><section id="listepied"></section></footer><footer id="piedmobile"><span class="item"><a href=https://www.bibmath.net/contact.php?origine=mobile>Contact</a></span><span class="item"><a class="change-consent" onclick="window.__tcfapi('displayConsentUi', 2, function() {} );">Confidentialité</a><span class="item"><a href=https://www.bibmath.net/credits.php>Mentions légales</a></span></footer><footer id="baspiedmobile"></footer>
+<script>
+var acc = document.getElementsByClassName("titrecours");
+var i;
+
+for (i = 0; i < acc.length; i++) {
+  acc[i].addEventListener("click", function() {
+    /* Toggle between adding and removing the "active" class,
+    to highlight the button that controls the panel */
+    this.classList.toggle("activecours");
+
+    /* Toggle between hiding and showing the active panel */
+    var panel = this.nextElementSibling;
+    if (panel.style.display === "block") {
+      panel.style.display = "none";
+    } else {
+      panel.style.display = "block";
+    }
+  });
+}
+</script>
+
+</body><script type="text/javascript" src="https://www.bibmath.net/common/scrolling.js"></script>
+<!-- Mirrored from www.bibmath.net/dico/index.php?action=affiche&quoi=./a/arbreproba.html by HTTrack Website Copier/3.x [XR&CO'2014], Tue, 27 Aug 2024 11:10:55 GMT -->
+</html>
