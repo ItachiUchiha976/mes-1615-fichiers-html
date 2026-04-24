@@ -1,0 +1,325 @@
+\documentclass[a4paper, 11pt]{article}
+
+% ── Encodage & langue ──────────────────────────────────────────────
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+
+% ── Mise en page ───────────────────────────────────────────────────
+\usepackage[top=2cm, bottom=2cm, left=2.2cm, right=2.2cm]{geometry}
+\usepackage{parskip}
+\setlength{\parindent}{0pt}
+
+% ── Mathématiques ──────────────────────────────────────────────────
+\usepackage{amsmath, amssymb}
+
+% ── Tableaux & couleurs ────────────────────────────────────────────
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage[table]{xcolor}
+\definecolor{bleu}{RGB}{30, 90, 180}
+\definecolor{vertf}{RGB}{30, 140, 80}
+\definecolor{rougef}{RGB}{190, 40, 40}
+\definecolor{grisclair}{RGB}{240, 243, 248}
+\definecolor{gristitre}{RGB}{55, 65, 85}
+
+% ── Boîtes & encadrés ─────────────────────────────────────────────
+\usepackage{tcolorbox}
+\tcbuselibrary{skins, breakable, theorems}
+
+\tcbset{
+  fichebase/.style={
+    enhanced, breakable,
+    colback=grisclair,
+    colframe=bleu,
+    fonttitle=\bfseries\color{white},
+    coltitle=white,
+    attach boxed title to top left={yshift=-2mm, xshift=6mm},
+    boxed title style={colback=bleu, colframe=bleu, rounded corners},
+    arc=4pt,
+    left=6pt, right=6pt, top=10pt, bottom=6pt,
+  },
+  alertebox/.style={
+    enhanced,
+    colback=rougef!8,
+    colframe=rougef,
+    fonttitle=\bfseries\color{rougef},
+    coltitle=rougef,
+    boxrule=0.8pt,
+    arc=3pt,
+  },
+  verdebox/.style={
+    enhanced,
+    colback=vertf!8,
+    colframe=vertf,
+    fonttitle=\bfseries\color{vertf},
+    coltitle=vertf,
+    boxrule=0.8pt,
+    arc=3pt,
+  },
+}
+
+% ── Tikz (schéma règle du gamma) ───────────────────────────────────
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning}
+
+% ── En-tête / pied de page ─────────────────────────────────────────
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0.4pt}
+\fancyhead[L]{\small\color{gristitre}\textbf{Chimie — Oxydoréduction}}
+\fancyhead[R]{\small\color{gristitre}Fiche méthode}
+\fancyfoot[C]{\small\thepage}
+
+% ── Titre ──────────────────────────────────────────────────────────
+\usepackage{titling}
+\pretitle{\begin{center}\Large\bfseries\color{bleu}}
+\posttitle{\end{center}}
+\preauthor{}\author{}\postauthor{}
+\predate{}\date{}\postdate{}
+
+% ══════════════════════════════════════════════════════════════════
+\begin{document}
+% ══════════════════════════════════════════════════════════════════
+
+\title{Prédire la spontanéité d'une réaction d'oxydoréduction\\[4pt]
+\large Méthode complète — Règle du $\gamma$, Nernst et potentiels réels}
+\maketitle
+\thispagestyle{fancy}
+\vspace{-6pt}
+\hrule height 1pt
+\vspace{10pt}
+
+% ─────────────────────────────────────────────────────────────────
+\begin{tcolorbox}[fichebase, title={Rappels fondamentaux}]
+
+\textbf{Couple oxydant/réducteur :} un oxydant Ox et son réducteur conjugué Red sont liés par la demi-équation :
+\[
+  \text{Ox} + n\,e^- \;\longrightarrow\; \text{Red}
+\]
+
+\textbf{Potentiel standard $E°$} (en V, à 25°C, concentrations = 1 mol/L, pH = 0 par convention électrochimique).
+
+\textbf{Potentiel réel $E$} : calculé par la loi de Nernst en tenant compte des conditions effectives (concentrations, pH).
+
+\end{tcolorbox}
+
+\vspace{8pt}
+
+% ─────────────────────────────────────────────────────────────────
+\section*{\color{bleu}Méthode en 5 étapes}
+
+% ── Étape 1 ──────────────────────────────────────────────────────
+\begin{tcolorbox}[verdebox, title={Étape 1 — Identifier les couples redox en présence}]
+Repère dans l'énoncé toutes les espèces susceptibles de jouer le rôle d'oxydant ou de réducteur.\\
+Associe chacune à son couple \textbf{Ox/Red} et note son $E°$ (table des potentiels standard).
+
+\medskip
+\textit{Exemple :} Fe solide + MgSO\textsubscript{4}(aq) $\;\longrightarrow\;$ couples à considérer :
+\[
+  \text{Fe}^{2+}/\text{Fe}, \qquad \text{Mg}^{2+}/\text{Mg}, \qquad \text{SO}_4^{2-}/\text{H}_2\text{SO}_3
+\]
+\end{tcolorbox}
+
+\vspace{4pt}
+
+% ── Étape 2 ──────────────────────────────────────────────────────
+\begin{tcolorbox}[verdebox, title={Étape 2 — Écrire les demi-équations redox équilibrées}]
+Équilibre les atomes (avec H\textsubscript{2}O) \textbf{puis} les charges (avec H\textsuperscript{+} en milieu acide, OH\textsuperscript{-} en milieu basique).
+
+\medskip
+\begin{align*}
+  &\text{Fe}^{2+} + 2e^- \longrightarrow \text{Fe} &\quad& (\text{pas de H}^+)\\[4pt]
+  &\text{SO}_4^{2-} + 4\,\text{H}^+ + 2e^- \longrightarrow \text{H}_2\text{SO}_3 + \text{H}_2\text{O} &\quad& (\mathbf{4\,\text{H}^+} \text{ impliqués !})
+\end{align*}
+
+\begin{tcolorbox}[alertebox, title={Point clé}]
+  \textbf{Si H\textsuperscript{+} (ou OH\textsuperscript{-}) figure dans la demi-équation, le potentiel dépend fortement du pH.}\\
+  $\Rightarrow$ L'application de Nernst est \textbf{obligatoire}.
+\end{tcolorbox}
+\end{tcolorbox}
+
+\vspace{4pt}
+
+% ── Étape 3 ──────────────────────────────────────────────────────
+\begin{tcolorbox}[verdebox, title={Étape 3 — Calculer les potentiels réels (loi de Nernst)}]
+
+\textbf{Formule générale à 25°C :}
+\[
+  \boxed{E = E° - \frac{0{,}06}{n}\,\log\frac{[\text{Red}]}{[\text{Ox}]}}
+\]
+
+\textbf{Règle pratique :}
+\begin{itemize}
+  \item Couple \textbf{sans H\textsuperscript{+}} dans la demi-équation : $E \approx E°$ (Nernst change peu si les concentrations sont proches de 1 mol/L).
+  \item Couple \textbf{avec $p$ fois H\textsuperscript{+}} : chaque décade de pH fait varier $E$ de $\dfrac{0{,}06\,p}{n}$ V.
+  \item \textbf{Si le pH n'est pas précisé dans l'énoncé $\Rightarrow$ supposer pH = 7 (milieu neutre).}
+\end{itemize}
+
+\medskip
+\textit{Application} — SO\textsubscript{4}\textsuperscript{2-}/H\textsubscript{2}SO\textsubscript{3} à pH 7 (concentrations 1 mol/L) :
+\[
+  E = 0{,}17 - \frac{0{,}06}{2}\,\log\frac{[\text{H}_2\text{SO}_3]}{[\text{SO}_4^{2-}][\text{H}^+]^4}
+  = 0{,}17 - 0{,}03\times\log\!\left(\frac{1}{(10^{-7})^4}\right)
+  = 0{,}17 - 0{,}84 \approx -0{,}67\;\text{V}
+\]
+Le potentiel \textbf{passe de $+0{,}17$ V (en milieu acide) à $-0{,}67$ V (en milieu neutre)}.
+
+\end{tcolorbox}
+
+\vspace{4pt}
+
+% ── Étape 4 ──────────────────────────────────────────────────────
+\begin{tcolorbox}[verdebox, title={Étape 4 — Appliquer la règle du $\gamma$ (gamma) avec les potentiels réels}]
+
+\medskip
+\textbf{Classe les couples par potentiel réel croissant (de bas en haut) :}
+
+\begin{center}
+\begin{tikzpicture}[>=Stealth, font=\small]
+  % Axe vertical
+  \draw[thick, ->] (0,-0.3) -- (0,3.2) node[right]{$E$ (V)};
+
+  % Couple bas
+  \draw[bleu, very thick] (-0.15,0.6) -- (4.5,0.6);
+  \node[left] at (-0.15,0.6) {$E_{\text{bas}}$};
+  \node[right, bleu] at (4.6,0.6) {\textbf{Ox\textsubscript{2} / Red\textsubscript{2}} \quad réducteur = \textbf{Red\textsubscript{2}}};
+
+  % Couple haut
+  \draw[rougef, very thick] (-0.15,2.2) -- (4.5,2.2);
+  \node[left] at (-0.15,2.2) {$E_{\text{haut}}$};
+  \node[right, rougef] at (4.6,2.2) {\textbf{Ox\textsubscript{1} / Red\textsubscript{1}} \quad oxydant = \textbf{Ox\textsubscript{1}}};
+
+  % Flèches gamma
+  \draw[->, thick, rougef, dashed] (2.2,2.2) -- (2.2,0.6);
+  \node[right] at (2.25,1.4) {\color{rougef} sens spontané};
+\end{tikzpicture}
+\end{center}
+
+\[
+  \textbf{Réaction spontanée :}\quad \text{Ox}_1 + \text{Red}_2 \;\longrightarrow\; \text{Red}_1 + \text{Ox}_2
+\]
+
+L'oxydant du couple \textbf{supérieur} réagit avec le réducteur du couple \textbf{inférieur}.
+
+\end{tcolorbox}
+
+\vspace{4pt}
+
+% ── Étape 5 ──────────────────────────────────────────────────────
+\begin{tcolorbox}[verdebox, title={Étape 5 — Vérifier avec $\Delta E$}]
+
+\[
+  \boxed{\Delta E = E_{\text{oxydant}} - E_{\text{réducteur}} > 0 \;\Longrightarrow\; \text{réaction \textbf{spontanée}}}
+\]
+\[
+  \Delta E < 0 \;\Longrightarrow\; \text{réaction \textbf{non spontanée} dans ce sens}
+\]
+
+\end{tcolorbox}
+
+\vspace{10pt}
+
+% ─────────────────────────────────────────────────────────────────
+\section*{\color{bleu}Organigramme récapitulatif}
+
+\begin{center}
+\begin{tikzpicture}[
+  node distance=0.55cm and 0.3cm,
+  box/.style={draw, rounded corners=3pt, fill=grisclair,
+              minimum width=6.5cm, minimum height=0.75cm,
+              align=center, font=\small},
+  dec/.style={draw, diamond, fill=bleu!12, aspect=3.0, align=center,
+              font=\small\bfseries, inner sep=2pt},
+  arr/.style={->, thick},
+  >=Stealth
+]
+  \node[box, fill=bleu!20] (s1) {\textbf{1.} Identifier les couples Ox/Red};
+  \node[box, below=of s1] (s2) {\textbf{2.} Écrire les demi-équations équilibrées};
+  \node[dec, below=of s2] (q1) {H\textsuperscript{+} présent ?};
+  \node[box, below left=0.6cm and 1.6cm of q1, fill=vertf!12] (oui)
+        {\textbf{Oui} $\Rightarrow$ Appliquer Nernst\\(pH = 7 si non précisé)};
+  \node[box, below right=0.6cm and 1.6cm of q1, fill=gray!12] (non)
+        {\textbf{Non} $\Rightarrow$ Utiliser $E°$ directement};
+  \node[box, below=2.2cm of q1] (s4)
+        {\textbf{4.} Classer les potentiels réels — Règle du $\gamma$};
+  \node[dec, below=of s4] (q2) {$\Delta E > 0$ ?};
+  \node[box, below left=0.6cm and 1.4cm of q2, fill=vertf!20] (spon)
+        {\textbf{Réaction SPONTANÉE} \checkmark};
+  \node[box, below right=0.6cm and 1.4cm of q2, fill=rougef!15] (nspon)
+        {\textbf{Non spontanée} \texttimes};
+
+  \draw[arr] (s1) -- (s2);
+  \draw[arr] (s2) -- (q1);
+  \draw[arr] (q1) -- node[above, font=\scriptsize]{Oui} (oui);
+  \draw[arr] (q1) -- node[above, font=\scriptsize]{Non} (non);
+  \draw[arr] (oui) -- (s4);
+  \draw[arr] (non) -- (s4);
+  \draw[arr] (s4) -- (q2);
+  \draw[arr] (q2) -- node[above, font=\scriptsize]{Oui} (spon);
+  \draw[arr] (q2) -- node[above, font=\scriptsize]{Non} (nspon);
+\end{tikzpicture}
+\end{center}
+
+\vspace{8pt}
+
+% ─────────────────────────────────────────────────────────────────
+\section*{\color{bleu}Exemples illustratifs}
+
+\rowcolors{2}{grisclair}{white}
+\begin{tabular}{>{\bfseries}p{4.2cm} p{2.5cm} p{2.5cm} p{1.8cm} p{3.5cm}}
+\toprule
+\rowcolor{bleu!85}\color{white}Système &
+  \color{white}$E°_{\text{haut}}$ &
+  \color{white}$E°_{\text{bas}}$ &
+  \color{white}Spontané ? &
+  \color{white}Raison \\
+\midrule
+Fe + Cu\textsuperscript{2+} &
+  $+0{,}34$ V \newline (Cu\textsuperscript{2+}/Cu) &
+  $-0{,}44$ V \newline (Fe\textsuperscript{2+}/Fe) &
+  \textcolor{vertf}{\textbf{Oui}} &
+  $\Delta E = 0{,}78$ V $> 0$ \\
+Cu + Zn\textsuperscript{2+} &
+  $-0{,}44$ V (Fe) &
+  $-0{,}76$ V (Zn) &
+  \textcolor{rougef}{\textbf{Non}} &
+  $\gamma$ inversé \\
+Zn + Cu\textsuperscript{2+} &
+  $+0{,}34$ V \newline (Cu\textsuperscript{2+}/Cu) &
+  $-0{,}76$ V \newline (Zn\textsuperscript{2+}/Zn) &
+  \textcolor{vertf}{\textbf{Oui}} &
+  $\Delta E = 1{,}10$ V $> 0$ \\
+Fe + Mg\textsuperscript{2+} &
+  $-0{,}44$ V \newline (Fe\textsuperscript{2+}/Fe) &
+  $-2{,}37$ V \newline (Mg\textsuperscript{2+}/Mg) &
+  \textcolor{rougef}{\textbf{Non}} &
+  Mg\textsuperscript{2+} ne peut pas oxyder Fe \\
+Fe + SO\textsubscript{4}\textsuperscript{2-} (pH 7) &
+  $-0{,}67$ V (réel) &
+  $-0{,}44$ V \newline (Fe\textsuperscript{2+}/Fe) &
+  \textcolor{rougef}{\textbf{Non}} &
+  Nernst abaisse $E$ en dessous de Fe \\
+Fe + SO\textsubscript{4}\textsuperscript{2-} (pH 0) &
+  $+0{,}17$ V (réel) &
+  $-0{,}44$ V \newline (Fe\textsuperscript{2+}/Fe) &
+  \textcolor{vertf}{\textbf{Oui}} &
+  En milieu très acide seulement \\
+\bottomrule
+\end{tabular}
+
+\vspace{10pt}
+
+% ─────────────────────────────────────────────────────────────────
+\begin{tcolorbox}[alertebox, title={À retenir absolument}]
+\begin{enumerate}
+  \item \textbf{E° suffit} si aucun H\textsuperscript{+}/OH\textsuperscript{-} dans les demi-équations.
+  \item \textbf{Nernst est obligatoire} dès qu'un H\textsuperscript{+} (ou OH\textsuperscript{-}) apparaît.
+  \item \textbf{pH = 7 par défaut} si l'énoncé ne précise pas le milieu.
+  \item La règle du $\gamma$ s'applique toujours sur les \textbf{potentiels réels}, jamais aveuglément sur $E°$.
+  \item $\Delta E > 0$ $\Leftrightarrow$ réaction spontanée dans le sens direct.
+\end{enumerate}
+\end{tcolorbox}
+
+\end{document}
