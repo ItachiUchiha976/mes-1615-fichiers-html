@@ -2,8 +2,8 @@
 
 Ce projet automatise entièrement la transformation de tes **50 heures de vidéos**
 de formation en séduction en un **guide pratique Markdown** structuré, actionnable
-et prêt à l'emploi — le tout via **Whisper** (transcription) et **Gemini 1.5 Pro**
-(synthèse & rédaction).
+et prêt à l'emploi — le tout via **Whisper** (transcription) et **Claude / Gemini**
+(synthèse & rédaction en français).
 
 ---
 
@@ -85,7 +85,39 @@ GDRIVE_TOKEN_FILE=token.json
 
 ## Utilisation
 
-### Pipeline complet (toutes les étapes)
+### Workflow recommandé (le plus simple)
+
+**Étape 1 — Transcription + fusion avec le script autonome (sur ton PC)**
+
+```bash
+# Pointe vers le dossier racine de tes formations (avec tous les sous-dossiers)
+python transcribe_and_merge.py --video-dir /chemin/vers/mes_formations --model medium
+```
+
+Ce script fait tout en une fois : transcription Whisper (avec checkpoint anti-crash),
+fusion hiérarchique intelligente (respecte l'ordre des modules/chapitres),
+et produit `merged_transcript.txt`.
+
+Options utiles :
+
+```bash
+# Si la transcription a planté et tu veux reprendre là où tu t'es arrêté :
+python transcribe_and_merge.py --video-dir /chemin/vers/mes_formations  # repart du checkpoint
+
+# Si les .txt sont déjà générés et tu veux seulement refaire la fusion :
+python transcribe_and_merge.py --only-merge --transcripts-dir transcripts/
+
+# Modèle plus rapide (moins bon) si ton PC est lent :
+python transcribe_and_merge.py --video-dir /chemin/vers/mes_formations --model small
+```
+
+**Étape 2 — Donner le fichier à Claude pour générer le guide**
+
+Voir la section [Comment donner les fichiers à Claude](#comment-donner-les-fichiers-à-claude) ci-dessous.
+
+---
+
+### Pipeline complet automatisé (avec Google Drive + clé API)
 
 ```bash
 # Depuis Google Drive, avec Claude pour le guide (recommandé)
@@ -98,40 +130,53 @@ python main.py --steps all --folder-id TON_FOLDER_ID_GDRIVE --guide-engine claud
 > **Note multilingue :** Whisper détecte automatiquement l'anglais et l'espagnol.
 > Le guide est toujours généré **en français**, quelle que soit la langue des vidéos.
 
-### Si tes vidéos sont déjà téléchargées localement
-
-```bash
-# Place tes vidéos dans un dossier, ex: mes_videos/
-python main.py --steps transcribe merge generate --video-dir mes_videos/ --guide-engine claude
-```
-
-### Étapes séparées
-
-```bash
-# Étape 1 : Télécharger
-python main.py --steps download --folder-id FOLDER_ID
-
-# Étape 2 : Transcrire (détection auto de la langue, moteur local gratuit)
-python main.py --steps transcribe --engine whisper_local
-
-# Étape 2 alternative : Transcrire via API OpenAI (plus rapide, ~$0.006/min)
-python main.py --steps transcribe --engine whisper_api
-
-# Étape 3 : Fusionner
-python main.py --steps merge
-
-# Étape 4 : Générer le guide avec Claude (recommandé)
-python main.py --steps generate --guide-engine claude
-
-# Étape 4 alternative : avec Gemini 2.5 Pro
-python main.py --steps generate --guide-engine gemini
-```
-
 ### Reprendre après une interruption
 
-Chaque étape est **idempotente** : les vidéos déjà téléchargées et les
-transcriptions déjà générées sont automatiquement ignorées (`[SKIP]`).
-Tu peux relancer sans risque.
+`transcribe_and_merge.py` sauvegarde un **checkpoint** (`whisper_checkpoint.json`) après
+chaque vidéo. Si le script est interrompu (coupure, crash, redémarrage), relance simplement
+la même commande : les vidéos déjà transcrites sont ignorées (`[SKIP]`).
+
+---
+
+## Comment donner les fichiers à Claude
+
+Voici les **3 méthodes** pour me transmettre tes transcriptions, de la plus simple à la plus avancée.
+
+### Méthode A — Claude.ai (interface web) — GRATUITE, la plus simple
+
+1. Lance `transcribe_and_merge.py` sur ton PC → tu obtiens `merged_transcript.txt`
+2. Va sur **[claude.ai](https://claude.ai)**
+3. Clique sur le trombone 📎 pour joindre un fichier
+4. Uploade `merged_transcript.txt` (jusqu'à ~30 Mo acceptés)
+5. Écris : *"Crée-moi un guide complet de la séduction en français à partir de ces transcriptions,
+   structuré en 9 chapitres : mindset, comprendre les femmes, l'approche, la conversation,
+   la séduction progressive, situations spécifiques, erreurs à éviter, scripts pratiques,
+   développement personnel."*
+
+> ⚠️ Si le fichier dépasse ~30 Mo, coupe-le en 2-3 parties et envoie-les dans la même conversation.
+
+### Méthode B — Claude Projects (abonnement Pro) — MEILLEURE OPTION
+
+Si tu as **Claude Pro** (~$20/mois) :
+1. Crée un **Project** sur claude.ai
+2. Uploade `merged_transcript.txt` dans les documents du projet
+3. Claude a accès permanent au fichier dans toutes les conversations du projet
+4. Demande le guide — tu peux itérer, demander des corrections, des ajouts, etc.
+
+### Méthode C — Via ce pipeline Python (clé API Anthropic)
+
+```bash
+python main.py --steps generate --guide-engine claude
+# Nécessite ANTHROPIC_API_KEY dans .env (~$1.60 pour 50h)
+```
+
+### Méthode D — Gemini avec ton abonnement existant
+
+1. Va sur **[gemini.google.com](https://gemini.google.com)**
+2. Uploade `merged_transcript.txt`
+3. Demande le guide en français
+
+> Gemini 2.0/2.5 Pro supporte de très grands fichiers — idéal pour ta transcription de 50h.
 
 ---
 
