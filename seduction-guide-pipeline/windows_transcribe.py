@@ -3,8 +3,8 @@
 """
 TRANSCRIPTION WHISPER - WINDOWS 10
 ====================================
-Ce script transcrit automatiquement toutes tes videos en fichiers .txt.
-Lance-le le soir, laisse tourner la nuit, retrouve tes transcriptions le matin.
+Transcrit automatiquement toutes tes videos en fichiers .txt.
+Lance le soir, retrouve les transcriptions le matin.
 
 INSTALLATION (une seule fois) :
   1. pip install faster-whisper
@@ -16,9 +16,10 @@ USAGE :
   python windows_transcribe.py C:\\Users\\Toi\\Videos\\Formations
 
 RESULTAT :
-  transcriptions\\            -> un .txt par video, meme arborescence que tes dossiers
-  transcription_COMPLETE.txt  -> tout fusionne dans l'ordre, pret pour Claude
-  transcription.log           -> journal de progression complet
+  transcriptions\\                    -> un .txt par video
+  transcription_COMPLETE_PARTIE_1.txt -> fichiers decoupes en ~3.5 Mo
+  transcription_COMPLETE_PARTIE_2.txt -> (si le contenu est long)
+  transcription.log                   -> journal de progression
 """
 
 import json
@@ -47,6 +48,9 @@ LOG_FILE        = "transcription.log"
 #   "small"           -> rapide, qualite correcte
 #   "distil-large-v3" -> presque aussi bon que large-v3, 2x plus rapide
 WHISPER_MODEL = "large-v3"
+
+# Taille max par fichier de sortie (3.5 Mo = safe pour claude.ai)
+MAX_BYTES_PAR_PARTIE = int(3.5 * 1024 * 1024)
 
 VIDEO_EXTENSIONS = {
     ".mp4", ".avi", ".mov", ".mkv", ".webm",
@@ -140,7 +144,7 @@ def get_whisper_model():
 def transcribe_audio(audio_path: Path) -> tuple:
     """Transcrit l'audio. Retourne (texte, langue_detectee)."""
     model = get_whisper_model()
-    # Pas de langue specifiee = detection automatique (anglais, espagnol, etc.)
+    # Detection automatique de la langue (anglais, espagnol, etc.)
     segments, info = model.transcribe(str(audio_path), beam_size=5)
     text = " ".join(seg.text for seg in segments).strip()
     return text, info.language
@@ -159,25 +163,18 @@ def format_duree(secondes: float) -> str:
 def affiche_barre(i: int, total: int, durees_reelles: list,
                   debut_global: float, success: int, errors: int):
     """
-    Affiche une barre de progression avec :
-      - % d'avancement
-      - nombre de videos traitees
-      - compteur OK / Erreurs
-      - temps ecoule depuis le debut
-      - temps restant estime (base sur la moyenne des videos deja traitees)
+    Affiche une ligne de progression apres chaque video :
+      [####----] 34.2%  12/35 videos | OK:11 Err:1 | Ecoule: 1h23m | Reste estim.: 2h41m
     """
     pct = i / total * 100
     elapsed = time.time() - debut_global
 
-    # Estimation du temps restant
     if durees_reelles:
         moy = sum(durees_reelles) / len(durees_reelles)
-        restantes = total - i
-        eta_str = format_duree(moy * restantes)
+        eta_str = format_duree(moy * (total - i))
     else:
         eta_str = "calcul en cours..."
 
-    # Barre visuelle
     largeur = 28
     rempli = int(largeur * i / total)
     barre = "#" * rempli + "-" * (largeur - rempli)
@@ -198,18 +195,16 @@ def process_video(video_path: Path, output_txt: Path,
     """
     Transcrit une video et sauvegarde le .txt.
     Retourne (succes: bool, duree_traitement: float).
-    duree_traitement = 0.0 si la video etait deja traitee (skip).
+    duree = 0.0 si la video etait deja traitee (skip).
     """
     key = str(video_path)
 
-    # Deja transcrit ? -> on passe
     if checkpoint.get(key) == "ok" and output_txt.exists():
         log.info(f"  [SKIP] Deja transcrit : {video_path.name}")
         return True, 0.0
 
     log.info(f"  --> Traitement : {video_path.name}")
     output_txt.parent.mkdir(parents=True, exist_ok=True)
-
     t_start = time.time()
 
     for attempt in range(1, 4):  # 3 tentatives maximum
@@ -225,7 +220,6 @@ def process_video(video_path: Path, output_txt: Path,
                 f"=== LANGUE DETECTEE : {lang} ===\n\n"
             )
             output_txt.write_text(header + text + "\n", encoding="utf-8")
-
             checkpoint[key] = "ok"
             save_checkpoint(checkpoint)
 
@@ -245,21 +239,29 @@ def process_video(video_path: Path, output_txt: Path,
                 return False, 0.0
 
 
-# -- Fusion finale avec sommaire -------------------------------------------------
+# -- Fusion avec sommaire + decoupage automatique en parties de 3.5 Mo ----------
 
-def fusionne_tout(output_dir: Path, fichier_final: Path):
+def fusionne_tout(output_dir: Path, base_name: str = "transcription_COMPLETE"):
     """
-    Fusionne tous les .txt dans l'ordre naturel.
-    Genere un SOMMAIRE en tete de fichier pour que Claude
-    comprenne la structure des formations avant de lire quoi que ce soit.
-    """
-    log.info("\nFusion de tous les .txt en un seul fichier...")
+    Fusionne tous les .txt dans l'ordre naturel et les decoupe automatiquement
+    en parties de 3.5 Mo max (taille sure pour claude.ai gratuit).
 
+    La PARTIE 1 contient le SOMMAIRE complet de toute l'arborescence,
+    suivi des premieres transcriptions.
+    Les parties suivantes continuent la ou la precedente s'est arretee.
+
+    Produit :
+      transcription_COMPLETE_PARTIE_1.txt
+      transcription_COMPLETE_PARTIE_2.txt  (si necessaire)
+      ...
+    """
+    log.info("\nFusion et decoupage automatique des fichiers .txt...")
+
+    # Collecter tous les .txt par dossier
     dossiers = {}
     for txt in output_dir.rglob("*.txt"):
         dossiers.setdefault(txt.parent, []).append(txt)
 
-    # Du dossier le plus profond au plus superficiel, ordre naturel
     dossiers_tries = sorted(
         dossiers.keys(),
         key=lambda p: (-len(p.parts), natural_key(p.name))
@@ -276,51 +278,98 @@ def fusionne_tout(output_dir: Path, fichier_final: Path):
         sections.append((nom, txts))
 
     total_videos = sum(len(txts) for _, txts in sections)
+    date_str = datetime.now().strftime("%d/%m/%Y %H:%M")
 
-    with open(fichier_final, "w", encoding="utf-8") as f:
-
-        # En-tete general
+    def ouvre_partie(num: int):
+        """Ouvre un nouveau fichier partie et ecrit son en-tete."""
+        nom_fichier = f"{base_name}_PARTIE_{num}.txt"
+        f = open(nom_fichier, "w", encoding="utf-8")
         f.write("=" * 70 + "\n")
-        f.write("  TRANSCRIPTIONS COMPLETES - FORMATIONS SUR LA SEDUCTION\n")
-        f.write(f"  Genere le : {datetime.now().strftime('%d/%m/%Y %H:%M')}\n")
-        f.write(f"  Nombre de videos  : {total_videos}\n")
-        f.write(f"  Nombre de sections : {len(sections)}\n")
+        f.write(f"  TRANSCRIPTIONS - FORMATIONS SUR LA SEDUCTION\n")
+        f.write(f"  PARTIE {num}\n")
+        f.write(f"  Genere le : {date_str}\n")
+        f.write(f"  Total videos (toutes parties) : {total_videos}\n")
         f.write("=" * 70 + "\n\n")
+        return f, nom_fichier
 
-        # Sommaire (GPS pour Claude)
-        # Claude lit ce sommaire en premier et comprend immediatement
-        # la structure complete des formations avant de lire les transcriptions.
-        f.write("+" + "-" * 68 + "+\n")
-        f.write("|  SOMMAIRE - ARBORESCENCE DES FORMATIONS                          |\n")
-        f.write("|  (dans l'ordre exact ou les transcriptions apparaissent)         |\n")
-        f.write("+" + "-" * 68 + "+\n\n")
+    # Ouvrir la partie 1
+    partie_num = 1
+    f, nom_courant = ouvre_partie(partie_num)
+    octets_courants = 0
+    fichiers_crees = [nom_courant]
 
-        num = 1
-        for nom_section, txts in sections:
-            depth = nom_section.count("\\") + nom_section.count("/")
-            indent = "    " * depth
-            f.write(f"{indent}[DOSSIER] {nom_section}\n")
-            for txt in txts:
-                f.write(f"{indent}    [{num:03d}] {txt.stem}\n")
-                num += 1
-            f.write("\n")
+    # ── Ecrire le SOMMAIRE dans la partie 1 ──────────────────────────────────
+    lignes_sommaire = []
+    lignes_sommaire.append("+" + "-" * 68 + "+\n")
+    lignes_sommaire.append("|  SOMMAIRE - ARBORESCENCE COMPLETE DES FORMATIONS                |\n")
+    lignes_sommaire.append("|  (dans l'ordre exact ou les transcriptions apparaissent)         |\n")
+    lignes_sommaire.append("+" + "-" * 68 + "+\n\n")
+    num = 1
+    for nom_section, txts in sections:
+        depth = nom_section.count("\\") + nom_section.count("/")
+        indent = "    " * depth
+        lignes_sommaire.append(f"{indent}[DOSSIER] {nom_section}\n")
+        for txt in txts:
+            lignes_sommaire.append(f"{indent}    [{num:03d}] {txt.stem}\n")
+            num += 1
+        lignes_sommaire.append("\n")
+    lignes_sommaire.append("\n" + "=" * 70 + "\n")
+    lignes_sommaire.append("  FIN DU SOMMAIRE - DEBUT DES TRANSCRIPTIONS\n")
+    lignes_sommaire.append("=" * 70 + "\n\n")
 
-        f.write("\n" + "=" * 70 + "\n")
-        f.write("  FIN DU SOMMAIRE - DEBUT DES TRANSCRIPTIONS\n")
-        f.write("=" * 70 + "\n\n")
+    bloc_sommaire = "".join(lignes_sommaire)
+    f.write(bloc_sommaire)
+    octets_courants += len(bloc_sommaire.encode("utf-8"))
 
-        # Contenu des transcriptions
-        for nom_section, txts in sections:
-            f.write("\n" + "-" * 60 + "\n")
-            f.write(f"  SECTION : {nom_section}\n")
-            f.write("-" * 60 + "\n\n")
-            for txt in txts:
-                f.write(txt.read_text(encoding="utf-8"))
-                f.write("\n\n")
+    # ── Ecrire les transcriptions section par section ─────────────────────────
+    for nom_section, txts in sections:
 
-    taille_mo = fichier_final.stat().st_size / (1024 * 1024)
-    log.info(f"Fichier final : {fichier_final}")
-    log.info(f"Taille : {taille_mo:.1f} Mo  |  {total_videos} videos  |  {len(sections)} sections")
+        section_header = (
+            "\n" + "-" * 60 + "\n"
+            f"  SECTION : {nom_section}\n"
+            + "-" * 60 + "\n\n"
+        )
+        header_bytes = len(section_header.encode("utf-8"))
+
+        # Ouvrir une nouvelle partie si la section ne rentre plus
+        if octets_courants + header_bytes > MAX_BYTES_PAR_PARTIE:
+            f.close()
+            log.info(f"  -> Partie {partie_num} terminee ({octets_courants / 1024 / 1024:.1f} Mo)")
+            partie_num += 1
+            f, nom_courant = ouvre_partie(partie_num)
+            fichiers_crees.append(nom_courant)
+            octets_courants = 0
+
+        f.write(section_header)
+        octets_courants += header_bytes
+
+        for txt in txts:
+            contenu = txt.read_text(encoding="utf-8") + "\n\n"
+            contenu_bytes = len(contenu.encode("utf-8"))
+
+            # Ouvrir une nouvelle partie si ce fichier ne rentre plus
+            if octets_courants > 0 and octets_courants + contenu_bytes > MAX_BYTES_PAR_PARTIE:
+                f.close()
+                log.info(f"  -> Partie {partie_num} terminee ({octets_courants / 1024 / 1024:.1f} Mo)")
+                partie_num += 1
+                f, nom_courant = ouvre_partie(partie_num)
+                fichiers_crees.append(nom_courant)
+                octets_courants = 0
+
+            f.write(contenu)
+            octets_courants += contenu_bytes
+
+    f.close()
+    log.info(f"  -> Partie {partie_num} terminee ({octets_courants / 1024 / 1024:.1f} Mo)")
+
+    # Recapitulatif
+    log.info(f"\nFusion terminee : {partie_num} fichier(s) cree(s)")
+    for nom_f in fichiers_crees:
+        taille = Path(nom_f).stat().st_size / 1024 / 1024
+        log.info(f"  {nom_f}  ({taille:.1f} Mo)")
+    log.info(f"  Total : {total_videos} videos dans {len(sections)} sections")
+
+    return fichiers_crees
 
 
 # -- Programme principal ---------------------------------------------------------
@@ -331,15 +380,15 @@ def main():
     video_root = Path(sys.argv[1]) if len(sys.argv) > 1 else Path(".")
     video_root = video_root.resolve()
     output_dir = Path(OUTPUT_DIR).resolve()
-    fichier_final = Path("transcription_COMPLETE.txt").resolve()
 
     log.info("=" * 70)
     log.info("  TRANSCRIPTION WHISPER - WINDOWS 10")
     log.info("=" * 70)
-    log.info(f"  Dossier videos  : {video_root}")
-    log.info(f"  Sorties .txt    : {output_dir}")
-    log.info(f"  Fichier final   : {fichier_final}")
-    log.info(f"  Modele Whisper  : {WHISPER_MODEL}")
+    log.info(f"  Dossier videos     : {video_root}")
+    log.info(f"  Sorties .txt       : {output_dir}")
+    log.info(f"  Fichiers fusionnes : transcription_COMPLETE_PARTIE_*.txt")
+    log.info(f"  Modele Whisper     : {WHISPER_MODEL}")
+    log.info(f"  Taille max/partie  : {MAX_BYTES_PAR_PARTIE / 1024 / 1024:.1f} Mo")
     log.info("=" * 70 + "\n")
 
     # Verifier que le dossier video existe
@@ -353,7 +402,7 @@ def main():
         subprocess.run(["ffmpeg", "-version"], capture_output=True, check=True)
     except (FileNotFoundError, subprocess.CalledProcessError):
         log.error("ffmpeg n'est pas installe ou introuvable.")
-        log.error("Installe-le avec : winget install ffmpeg  (cmd en administrateur)")
+        log.error("Installe-le : winget install ffmpeg  (cmd en administrateur)")
         log.error("Puis ferme et reouvre cette fenetre.")
         input("Appuie sur Entree pour fermer...")
         sys.exit(1)
@@ -377,13 +426,12 @@ def main():
     log.info(f"Videos trouvees   : {total}")
     log.info(f"Deja transcrites  : {deja_faites}  (seront ignorees [SKIP])")
     log.info(f"Restant a traiter : {total - deja_faites}")
-    log.info("\nDebut de la transcription...\n")
-    log.info("  Barre de progression affichee apres chaque video.")
-    log.info("  Format : [####----] XX.X%  N/total | OK:x Err:y | Ecoule: ... | Reste estim.: ...\n")
+    log.info("\nDebut de la transcription...")
+    log.info("Barre : [####----] XX.X%  N/total | OK:x Err:y | Ecoule: ... | Reste estim.: ...\n")
 
     success = 0
     errors = 0
-    durees_reelles = []   # durees des videos vraiment traitees (pas les skips)
+    durees_reelles = []
     debut_global = time.time()
 
     for i, video in enumerate(videos, 1):
@@ -399,7 +447,7 @@ def main():
 
         if ok:
             success += 1
-            if duree > 2.0:  # duree > 2s = video vraiment traitee (pas un skip)
+            if duree > 2.0:  # ignorer les skips pour l'estimation
                 durees_reelles.append(duree)
         else:
             errors += 1
@@ -414,16 +462,29 @@ def main():
     log.info(f"  Erreurs                     : {errors}")
     log.info(f"  Temps total                 : {format_duree(temps_total)}")
     if durees_reelles:
-        moy = sum(durees_reelles) / len(durees_reelles)
-        log.info(f"  Temps moyen par video       : {format_duree(moy)}")
+        log.info(f"  Temps moyen par video       : {format_duree(sum(durees_reelles)/len(durees_reelles))}")
     log.info("=" * 70)
 
-    # Fusion finale
+    # Fusion et decoupage
     if success > 0:
-        fusionne_tout(output_dir, fichier_final)
-        log.info("\nProchaine etape :")
-        log.info(f"  Uploade ce fichier sur claude.ai : {fichier_final}")
-        log.info("  (bouton trombone dans la barre de message)")
+        fichiers = fusionne_tout(output_dir)
+        nb = len(fichiers)
+        log.info(f"\nProchaine etape - uploade les {nb} fichier(s) sur claude.ai :")
+        for f in fichiers:
+            log.info(f"  {Path(f).resolve()}")
+        if nb > 1:
+            log.info(f"\nCOMMENT ENVOYER PLUSIEURS PARTIES A CLAUDE :")
+            log.info("  1. Va sur claude.ai et demarre une nouvelle conversation.")
+            log.info("  2. Ecris : 'Je vais te donner plusieurs fichiers de transcription.")
+            log.info("     Lis-les tous avant de creer le guide. Voici la partie 1.'")
+            log.info("     Puis attache PARTIE_1.txt.")
+            log.info("  3. Pour chaque partie suivante : 'Voici la suite.' + fichier.")
+            log.info("  4. Apres la derniere : 'C'est tout. Cree maintenant le guide")
+            log.info("     complet de seduction en francais en 9 chapitres.'")
+        else:
+            log.info("\n  Attache le fichier dans claude.ai (bouton trombone).")
+            log.info("  Demande : 'Cree un guide complet de seduction en francais")
+            log.info("  en 9 chapitres a partir de ces transcriptions.'")
 
     if errors > 0:
         log.warning(f"\n{errors} video(s) ont echoue.")
