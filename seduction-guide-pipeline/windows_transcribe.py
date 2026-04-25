@@ -216,8 +216,8 @@ def process_video(video_path: Path, output_txt: Path, checkpoint: dict) -> bool:
 
 def fusionne_tout(output_dir: Path, fichier_final: Path):
     """
-    Parcourt output_dir et fusionne tous les .txt dans l'ordre
-    (dossiers triés naturellement, vidéos dans chaque dossier aussi).
+    Parcourt output_dir et fusionne tous les .txt dans l'ordre naturel.
+    Génère un SOMMAIRE complet en tête de fichier pour guider Claude.
     """
     log.info("\nFusion de tous les .txt en un seul fichier…")
 
@@ -226,36 +226,71 @@ def fusionne_tout(output_dir: Path, fichier_final: Path):
     for txt in output_dir.rglob("*.txt"):
         dossiers.setdefault(txt.parent, []).append(txt)
 
-    # Trier : dossiers du plus profond au plus superficiel
-    dossiers_tries = sorted(dossiers.keys(), key=lambda p: (-len(p.parts), natural_key(p.name)))
+    # Tri : dossiers du plus profond au plus superficiel, ordre naturel
+    dossiers_tries = sorted(
+        dossiers.keys(),
+        key=lambda p: (-len(p.parts), natural_key(p.name))
+    )
+
+    # Construire la liste ordonnée (dossier, [txts]) pour éviter de calculer deux fois
+    sections = []
+    for dossier in dossiers_tries:
+        txts = sorted_naturally(dossiers[dossier])
+        try:
+            rel = dossier.relative_to(output_dir)
+            section_name = str(rel) if str(rel) != "." else "Racine"
+        except ValueError:
+            section_name = dossier.name
+        sections.append((section_name, txts))
+
+    total_videos = sum(len(txts) for _, txts in sections)
 
     with open(fichier_final, "w", encoding="utf-8") as f:
+
+        # ── EN-TÊTE ────────────────────────────────────────────────────────
         f.write("═" * 70 + "\n")
         f.write("  TRANSCRIPTIONS COMPLÈTES – FORMATIONS SUR LA SÉDUCTION\n")
         f.write(f"  Généré le : {datetime.now().strftime('%d/%m/%Y %H:%M')}\n")
+        f.write(f"  Nombre de vidéos : {total_videos}\n")
+        f.write(f"  Nombre de sections : {len(sections)}\n")
         f.write("═" * 70 + "\n\n")
 
-        for dossier in dossiers_tries:
-            txts = sorted_naturally(dossiers[dossier])
-            # Titre de section = nom du dossier relatif à output_dir
-            try:
-                rel = dossier.relative_to(output_dir)
-                section = str(rel) if str(rel) != "." else "Racine"
-            except ValueError:
-                section = dossier.name
+        # ── SOMMAIRE (index de l'arborescence) ────────────────────────────
+        # Ce sommaire sert de "GPS" à Claude : il voit d'un coup d'œil
+        # la structure complète avant de lire le premier mot de transcription.
+        f.write("┌" + "─" * 68 + "┐\n")
+        f.write("│  SOMMAIRE – ARBORESCENCE DES FORMATIONS" + " " * 28 + "│\n")
+        f.write("│  (dans l'ordre exact de la fusion)" + " " * 33 + "│\n")
+        f.write("└" + "─" * 68 + "┘\n\n")
 
+        num_global = 1
+        for section_name, txts in sections:
+            # Indentation visuelle selon la profondeur du dossier
+            depth = section_name.count("\\") + section_name.count("/")
+            indent = "    " * depth
+            f.write(f"{indent}📁 {section_name}\n")
+            for txt in txts:
+                f.write(f"{indent}    [{num_global:03d}] {txt.stem}\n")
+                num_global += 1
+            f.write("\n")
+
+        f.write("\n" + "═" * 70 + "\n")
+        f.write("  FIN DU SOMMAIRE – DÉBUT DES TRANSCRIPTIONS\n")
+        f.write("═" * 70 + "\n\n")
+
+        # ── TRANSCRIPTIONS ────────────────────────────────────────────────
+        for section_name, txts in sections:
             f.write(f"\n{'─' * 60}\n")
-            f.write(f"  SECTION : {section}\n")
+            f.write(f"  SECTION : {section_name}\n")
             f.write(f"{'─' * 60}\n\n")
 
             for txt in txts:
-                contenu = txt.read_text(encoding="utf-8")
-                f.write(contenu)
+                f.write(txt.read_text(encoding="utf-8"))
                 f.write("\n\n")
 
     taille_mo = fichier_final.stat().st_size / (1024 * 1024)
     log.info(f"Fichier fusionné : {fichier_final}")
-    log.info(f"Taille : {taille_mo:.1f} Mo")
+    log.info(f"Taille : {taille_mo:.1f} Mo ({total_videos} vidéos, {len(sections)} sections)")
 
 
 # ── Programme principal ───────────────────────────────────────────────────────
