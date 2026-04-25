@@ -67,18 +67,27 @@ def split_audio(audio_path: Path, chunk_duration_s: int = 600) -> list[Path]:
 
 # ─── Moteurs de transcription ─────────────────────────────────────────────────
 
-def _transcribe_whisper_local(audio_path: Path, language: str = "fr") -> str:
-    """Transcrit avec Whisper local (openai-whisper)."""
+def _transcribe_whisper_local(audio_path: Path, language: str | None = None) -> str:
+    """
+    Transcrit avec Whisper local (openai-whisper).
+    Si language=None, Whisper détecte automatiquement la langue (anglais, espagnol, etc.).
+    """
     import whisper  # type: ignore
 
     model = whisper.load_model("medium")  # "small", "medium", "large" selon le GPU
-    result = model.transcribe(str(audio_path), language=language, fp16=False)
+    kwargs = {"fp16": False}
+    if language:
+        kwargs["language"] = language
+    result = model.transcribe(str(audio_path), **kwargs)
+    detected = result.get("language", "?")
+    print(f"    Langue détectée : {detected}")
     return result["text"]
 
 
-def _transcribe_whisper_api(audio_path: Path, language: str = "fr") -> str:
+def _transcribe_whisper_api(audio_path: Path, language: str | None = None) -> str:
     """
     Transcrit via l'API OpenAI Whisper.
+    Si language=None, Whisper détecte automatiquement (anglais, espagnol, etc.).
     Si le fichier dépasse 25 Mo, le découpe automatiquement.
     """
     from openai import OpenAI  # type: ignore
@@ -86,22 +95,21 @@ def _transcribe_whisper_api(audio_path: Path, language: str = "fr") -> str:
     client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
     file_size_mb = audio_path.stat().st_size / (1024 * 1024)
 
+    def _transcribe_chunk(f):
+        kwargs = {"model": "whisper-1", "file": f}
+        if language:
+            kwargs["language"] = language
+        return client.audio.transcriptions.create(**kwargs).text
+
     if file_size_mb <= 24:
         with open(audio_path, "rb") as f:
-            resp = client.audio.transcriptions.create(
-                model="whisper-1", file=f, language=language
-            )
-        return resp.text
+            return _transcribe_chunk(f)
     else:
-        # Découpage en chunks de 10 minutes
         chunks = split_audio(audio_path, chunk_duration_s=600)
         texts = []
         for chunk in tqdm(chunks, desc=f"  Chunks {audio_path.name[:30]}", leave=False):
             with open(chunk, "rb") as f:
-                resp = client.audio.transcriptions.create(
-                    model="whisper-1", file=f, language=language
-                )
-            texts.append(resp.text)
+                texts.append(_transcribe_chunk(f))
         return " ".join(texts)
 
 
@@ -111,7 +119,7 @@ def transcribe_video(
     video_path: Path,
     transcripts_dir: Path,
     engine: str = "whisper_local",
-    language: str = "fr",
+    language: str | None = None,
     skip_existing: bool = True,
 ) -> Path:
     """
@@ -149,7 +157,7 @@ def run(
     video_paths: list[Path],
     transcripts_dir: Path,
     engine: str = "whisper_local",
-    language: str = "fr",
+    language: str | None = None,
 ) -> list[Path]:
     """
     Transcrit toutes les vidéos et retourne la liste des fichiers .txt.

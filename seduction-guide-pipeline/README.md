@@ -65,8 +65,11 @@ cp .env.example .env
 ### 2. Remplir `.env`
 
 ```
-GEMINI_API_KEY=AIza...          # Obligatoire – clé API Gemini
-OPENAI_API_KEY=sk-...           # Optionnel – seulement si engine=whisper_api
+# Pour la génération du guide (choisir un des deux) :
+ANTHROPIC_API_KEY=sk-ant-...    # Recommandé – Claude Sonnet (meilleure qualité)
+GEMINI_API_KEY=AIza...          # Alternative – Gemini 2.5 Pro
+
+OPENAI_API_KEY=sk-...           # Optionnel – seulement si --engine whisper_api
 GDRIVE_CREDENTIALS_FILE=credentials.json
 GDRIVE_TOKEN_FILE=token.json
 ```
@@ -85,17 +88,21 @@ GDRIVE_TOKEN_FILE=token.json
 ### Pipeline complet (toutes les étapes)
 
 ```bash
-python main.py --steps all --folder-id TON_FOLDER_ID_GDRIVE
+# Depuis Google Drive, avec Claude pour le guide (recommandé)
+python main.py --steps all --folder-id TON_FOLDER_ID_GDRIVE --guide-engine claude
 ```
 
 > L'ID du dossier Google Drive se trouve dans l'URL :  
 > `https://drive.google.com/drive/folders/**1aBcDeFgHiJ...**`
 
+> **Note multilingue :** Whisper détecte automatiquement l'anglais et l'espagnol.
+> Le guide est toujours généré **en français**, quelle que soit la langue des vidéos.
+
 ### Si tes vidéos sont déjà téléchargées localement
 
 ```bash
 # Place tes vidéos dans un dossier, ex: mes_videos/
-python main.py --steps transcribe merge generate --video-dir mes_videos/
+python main.py --steps transcribe merge generate --video-dir mes_videos/ --guide-engine claude
 ```
 
 ### Étapes séparées
@@ -104,7 +111,7 @@ python main.py --steps transcribe merge generate --video-dir mes_videos/
 # Étape 1 : Télécharger
 python main.py --steps download --folder-id FOLDER_ID
 
-# Étape 2 : Transcrire (moteur local, plus lent mais gratuit)
+# Étape 2 : Transcrire (détection auto de la langue, moteur local gratuit)
 python main.py --steps transcribe --engine whisper_local
 
 # Étape 2 alternative : Transcrire via API OpenAI (plus rapide, ~$0.006/min)
@@ -113,8 +120,11 @@ python main.py --steps transcribe --engine whisper_api
 # Étape 3 : Fusionner
 python main.py --steps merge
 
-# Étape 4 : Générer le guide
-python main.py --steps generate
+# Étape 4 : Générer le guide avec Claude (recommandé)
+python main.py --steps generate --guide-engine claude
+
+# Étape 4 alternative : avec Gemini 2.5 Pro
+python main.py --steps generate --guide-engine gemini
 ```
 
 ### Reprendre après une interruption
@@ -125,20 +135,41 @@ Tu peux relancer sans risque.
 
 ---
 
-## Quelle stratégie choisir ? (Comparatif)
+## Quelle stratégie choisir ? (Comparatif complet)
 
-| Critère | Whisper Local | Whisper API | Gemini Native |
-|---|---|---|---|
-| **Coût** | Gratuit | ~$0.006/min | Inclus dans abonnement |
-| **Vitesse** | Lent (CPU) / Rapide (GPU) | Très rapide | — |
-| **Qualité** | Excellente (medium/large) | Excellente | Bonne |
-| **50h de vidéo** | 5-15h CPU / 1-2h GPU | ~18 min + coût | Limité par contexte |
-| **Confidentialité** | Totale (local) | OpenAI voit les données | Google voit les données |
-| **Recommandation** | ✅ Si tu as un bon CPU/GPU | ✅ Si tu veux aller vite | ⚠️ Uniquement pour petites vidéos |
+### Étape transcription
 
-**Recommandation pour 50h de vidéos :**
-1. Utilise **Whisper local** (modèle `medium`) sur ton CPU pendant la nuit — gratuit et privé.
-2. Envoie le fichier `merged_transcript.txt` à **Gemini 1.5 Pro** pour générer le guide.
+| Critère | Whisper Local | Whisper API (OpenAI) |
+|---|---|---|
+| **Coût** | Gratuit | ~$0.006/min ≈ **$18 pour 50h** |
+| **50h de vidéo** | 5-15h CPU / 1-2h GPU | ~18 minutes |
+| **Qualité** | Excellente (modèle medium) | Excellente |
+| **Langues** | Détection auto (EN, ES, etc.) | Détection auto (EN, ES, etc.) |
+| **Confidentialité** | Totale (local) | OpenAI voit les données |
+| **Recommandation** | ✅ Lance la nuit | ✅ Si tu veux aller vite |
+
+### Étape génération du guide
+
+| Critère | Claude Sonnet (recommandé) | Gemini 2.5 Pro |
+|---|---|---|
+| **Coût estimé** (50h) | ~$1.60 | ~$0.70 |
+| **Qualité rédaction** | ⭐⭐⭐⭐⭐ Excellente | ⭐⭐⭐⭐ Très bonne |
+| **Fenêtre contexte** | 200k tokens | 1M tokens |
+| **Mode map-reduce** | Automatique si besoin | Automatique si besoin |
+| **Recommandation** | ✅ **Meilleur guide** | ✅ Si tu as déjà Gemini Pro |
+
+### Coût total estimé pour 50h de vidéos
+
+| Scénario | Coût |
+|---|---|
+| Whisper local (nuit) + Claude guide | **~$1.60** |
+| Whisper local (nuit) + Gemini guide | **~$0.70** |
+| Whisper API (rapide) + Claude guide | **~$19.60** |
+
+**Recommandation finale :**
+1. Lance **Whisper local** (`--engine whisper_local`) pendant la nuit — gratuit.
+2. Génère le guide avec **Claude** (`--guide-engine claude`) — ~$1.60, meilleure qualité.
+3. Le guide sera rédigé **en français**, même si les vidéos sont en anglais ou espagnol.
 
 ---
 
@@ -180,7 +211,8 @@ Vérifie que ton `.env` est correctement rempli et que tu es dans le bon dossier
 
 | Variable | Description | Défaut |
 |---|---|---|
-| `GEMINI_API_KEY` | Clé API Gemini (obligatoire) | — |
+| `ANTHROPIC_API_KEY` | Clé API Claude/Anthropic (recommandé) | — |
+| `GEMINI_API_KEY` | Clé API Gemini (alternative) | — |
 | `OPENAI_API_KEY` | Clé API OpenAI Whisper (optionnel) | — |
 | `GDRIVE_CREDENTIALS_FILE` | Chemin credentials OAuth2 | `credentials.json` |
 | `GDRIVE_TOKEN_FILE` | Cache token OAuth2 | `token.json` |

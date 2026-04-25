@@ -9,7 +9,7 @@ Usage :
   1. (optionnel) Télécharger les vidéos depuis Google Drive
   2. Transcrire les vidéos en texte (Whisper local ou API)
   3. Fusionner toutes les transcriptions en un seul fichier
-  4. Générer le guide complet via Gemini 1.5 Pro
+  4. Générer le guide complet via Claude Sonnet (recommandé) ou Gemini 2.5 Pro
 """
 
 import argparse
@@ -67,8 +67,20 @@ def parse_args():
     )
     parser.add_argument(
         "--language",
-        default="fr",
-        help="Code langue pour Whisper (ex: fr, en). Défaut : fr.",
+        default=None,
+        help=(
+            "Code langue pour Whisper (ex: en, es, fr). "
+            "Par défaut : détection automatique (recommandé si vidéos multilingues anglais/espagnol)."
+        ),
+    )
+    parser.add_argument(
+        "--guide-engine",
+        choices=["claude", "gemini"],
+        default="claude",
+        help=(
+            "Moteur de génération du guide : "
+            "claude (défaut, recommandé – meilleure qualité) ou gemini."
+        ),
     )
     parser.add_argument(
         "--video-dir",
@@ -129,9 +141,10 @@ def main():
     print("\n" + "=" * 60)
     print("  PIPELINE : VIDÉOS → GUIDE DE SÉDUCTION")
     print("=" * 60)
-    print(f"  Étapes : {', '.join(steps)}")
-    print(f"  Moteur  : {args.engine}")
-    print(f"  Langue  : {args.language}")
+    print(f"  Étapes           : {', '.join(steps)}")
+    print(f"  Transcription    : {args.engine}")
+    print(f"  Langue Whisper   : {args.language or 'auto-détection'}")
+    print(f"  Génération guide : {args.guide_engine}")
     print("=" * 60 + "\n")
 
     video_paths = []
@@ -194,12 +207,14 @@ def main():
             print("  Lance d'abord les étapes transcribe + merge.")
             sys.exit(1)
 
-        print("▶ Étape 4 : Génération du guide (Gemini 1.5 Pro)")
+        engine_label = "Claude Sonnet" if args.guide_engine == "claude" else "Gemini 2.5 Pro"
+        print(f"▶ Étape 4 : Génération du guide ({engine_label})")
         import guide_generator
 
         guide_generator.run(
             merged_transcript_path=paths["merged_file"],
             output_guide_path=paths["output_guide"],
+            engine=args.guide_engine,
         )
         print()
 
