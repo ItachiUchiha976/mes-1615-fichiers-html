@@ -105,20 +105,32 @@ def extract_audio(video_path: Path, audio_path: Path):
 
 # ─── Transcription Whisper ────────────────────────────────────────────────────
 
-def transcribe_audio(audio_path: Path, model_name: str = "medium") -> str:
+def transcribe_audio(audio_path: Path, model_name: str = "large-v3") -> str:
     """
-    Transcrit l'audio avec Whisper local.
+    Transcrit l'audio avec faster-whisper (4x plus rapide, moins de RAM).
     Détecte automatiquement la langue (anglais, espagnol, etc.).
+    Fallback vers openai-whisper si faster-whisper n'est pas installé.
     """
-    import whisper  # type: ignore
+    try:
+        from faster_whisper import WhisperModel  # type: ignore
 
-    log.info(f"    Chargement du modèle Whisper '{model_name}'…")
-    model = whisper.load_model(model_name)
-    log.info(f"    Transcription en cours…")
-    result = model.transcribe(str(audio_path), fp16=False)
-    lang = result.get("language", "?")
-    log.info(f"    Langue détectée : {lang}")
-    return result["text"]
+        log.info(f"    faster-whisper '{model_name}' (int8, CPU)…")
+        model = WhisperModel(model_name, device="cpu", compute_type="int8")
+        segments, info = model.transcribe(str(audio_path), beam_size=5)
+        lang = info.language
+        prob = info.language_probability
+        log.info(f"    Langue détectée : {lang} ({prob:.0%})")
+        return " ".join(seg.text for seg in segments).strip()
+
+    except ImportError:
+        import whisper  # type: ignore
+
+        log.info(f"    openai-whisper '{model_name}' (fallback)…")
+        model = whisper.load_model(model_name)
+        result = model.transcribe(str(audio_path), fp16=False)
+        lang = result.get("language", "?")
+        log.info(f"    Langue détectée : {lang}")
+        return result["text"]
 
 
 def transcribe_with_retry(
@@ -363,14 +375,15 @@ def parse_args():
     )
     parser.add_argument(
         "--model",
-        choices=["tiny", "base", "small", "medium", "large", "large-v2", "large-v3"],
-        default="medium",
+        choices=["tiny", "base", "small", "medium", "large", "large-v2", "large-v3", "distil-large-v3"],
+        default="large-v3",
         help=(
-            "Modèle Whisper à utiliser. Défaut : medium.\n"
-            "  tiny/base : très rapide, qualité réduite\n"
-            "  small     : bon compromis vitesse/qualité\n"
-            "  medium    : recommandé (anglais/espagnol)\n"
-            "  large-v3  : meilleure qualité, très lent sur CPU"
+            "Modèle faster-whisper à utiliser. Défaut : large-v3.\n"
+            "  tiny/base         : très rapide, qualité réduite\n"
+            "  small             : bon compromis vitesse/qualité\n"
+            "  medium            : qualité correcte, RAM modérée\n"
+            "  large-v3          : recommandé – meilleure qualité EN/ES (défaut)\n"
+            "  distil-large-v3   : 2x plus rapide que large-v3, qualité proche"
         ),
     )
     parser.add_argument(

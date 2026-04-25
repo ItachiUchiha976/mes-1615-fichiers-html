@@ -34,7 +34,10 @@ Google Drive (vidéos)
   - macOS : `brew install ffmpeg`
   - Ubuntu/Debian : `sudo apt install ffmpeg`
   - Windows : [ffmpeg.org/download.html](https://ffmpeg.org/download.html)
-- (Optionnel pour Whisper local) **CUDA** si tu as un GPU Nvidia
+- (Optionnel) **CUDA** si tu as un GPU Nvidia (accélère faster-whisper ~10x)
+
+> **Note :** "Whisper v4" n'existe pas (info erronée d'une autre IA). La meilleure option
+> gratuite en 2026 est **faster-whisper large-v3**, automatiquement utilisé par ce script.
 
 ---
 
@@ -195,13 +198,18 @@ python main.py --steps generate --guide-engine claude
 
 ### Étape génération du guide
 
-| Critère | Claude Sonnet (recommandé) | Gemini 2.5 Pro |
+| Critère | Claude Sonnet 4.6 (recommandé) | Gemini 3.1 Pro Preview |
 |---|---|---|
+| **Modèle API** | `claude-sonnet-4-6` | `gemini-3.1-pro-preview` |
 | **Coût estimé** (50h) | ~$1.60 | ~$0.70 |
 | **Qualité rédaction** | ⭐⭐⭐⭐⭐ Excellente | ⭐⭐⭐⭐ Très bonne |
-| **Fenêtre contexte** | 200k tokens | 1M tokens |
+| **Fenêtre contexte** | 1M tokens (beta auto-activé) | 1M tokens |
 | **Mode map-reduce** | Automatique si besoin | Automatique si besoin |
 | **Recommandation** | ✅ **Meilleur guide** | ✅ Si tu as déjà Gemini Pro |
+
+> **Note :** Claude Sonnet 4.6 active automatiquement la fenêtre 1M tokens en beta
+> quand le fichier de transcription est long — toute la transcription de 50h tient
+> en un seul appel, sans découpage.
 
 ### Coût total estimé pour 50h de vidéos
 

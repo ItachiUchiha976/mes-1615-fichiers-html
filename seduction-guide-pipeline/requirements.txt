@@ -7,9 +7,15 @@ google-auth-oauthlib>=1.1.0
 yt-dlp>=2024.3.10
 ffmpeg-python>=0.2.0
 
-# Transcription (Whisper via OpenAI API or local)
-openai>=1.14.0
+# Transcription locale – faster-whisper (recommandé : 4x plus rapide, moins de RAM)
+# Utilise le modèle large-v3 en int8 quantisé → tourne bien sur CPU
+faster-whisper>=1.0.0
+
+# Fallback : openai-whisper classique (si faster-whisper non disponible)
 openai-whisper>=20231117
+
+# Client OpenAI (pour Whisper API cloud, optionnel)
+openai>=1.14.0
 
 # Gemini API
 google-generativeai>=0.5.0

@@ -149,13 +149,17 @@ erreurs à éviter. Direct et pratique.
 
 # ─── Moteur Claude (Anthropic) ────────────────────────────────────────────────
 
-# Fenêtre sûre pour Claude Sonnet (200k tokens ≈ 800k chars)
-CLAUDE_MAX_INPUT_CHARS = 700_000
-CLAUDE_CHUNK_CHARS = 150_000
+# Claude Sonnet 4.6 : 200k tokens standard, 1M tokens en beta (activé automatiquement)
+# 1M tokens ≈ 4M chars — largement suffisant pour 50h de transcription
+CLAUDE_MAX_INPUT_CHARS = 3_500_000
+CLAUDE_CHUNK_CHARS = 700_000
 
 
 def _call_claude(prompt: str) -> str:
-    """Envoie un prompt à Claude Sonnet via l'API Anthropic."""
+    """
+    Envoie un prompt à Claude Sonnet 4.6 via l'API Anthropic.
+    Active la fenêtre de 1M tokens en beta si le texte est long.
+    """
     import anthropic  # type: ignore
 
     api_key = os.environ.get("ANTHROPIC_API_KEY")
@@ -165,11 +169,19 @@ def _call_claude(prompt: str) -> str:
             "Ajoute-la dans ton fichier .env."
         )
     client = anthropic.Anthropic(api_key=api_key)
-    message = client.messages.create(
-        model="claude-sonnet-4-5",
-        max_tokens=8096,
-        messages=[{"role": "user", "content": prompt}],
-    )
+
+    # Si le prompt dépasse ~150k tokens (600k chars), on active le beta 1M tokens
+    use_long_context = len(prompt) > 600_000
+    kwargs = {
+        "model": "claude-sonnet-4-6",
+        "max_tokens": 8096,
+        "messages": [{"role": "user", "content": prompt}],
+    }
+    if use_long_context:
+        kwargs["betas"] = ["max-tokens-1m-2025-05-15"]
+        print("    Activation de la fenêtre 1M tokens (beta Claude 4.6)…")
+
+    message = client.messages.create(**kwargs)
     return message.content[0].text
 
 
@@ -189,7 +201,9 @@ def _generate_with_claude(transcript: str) -> str:
 # ─── Moteur Gemini ────────────────────────────────────────────────────────────
 
 # Gemini 2.5 Pro supporte ~1M tokens ≈ 4M chars (on reste conservatif)
-GEMINI_MODEL = "gemini-2.5-pro-latest"
+# gemini-3.1-pro-preview est le modèle le plus récent (fév. 2026, 1M tokens)
+# Fallback sur gemini-2.5-pro-latest si 3.1 n'est pas encore disponible via ton compte
+GEMINI_MODEL = "gemini-3.1-pro-preview"
 GEMINI_MAX_INPUT_CHARS = 3_000_000
 GEMINI_CHUNK_CHARS = 500_000
 

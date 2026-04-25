@@ -69,19 +69,35 @@ def split_audio(audio_path: Path, chunk_duration_s: int = 600) -> list[Path]:
 
 def _transcribe_whisper_local(audio_path: Path, language: str | None = None) -> str:
     """
-    Transcrit avec Whisper local (openai-whisper).
-    Si language=None, Whisper détecte automatiquement la langue (anglais, espagnol, etc.).
+    Transcrit avec faster-whisper large-v3 (4x plus rapide que Whisper standard,
+    moins de RAM, même qualité). Détecte automatiquement anglais/espagnol.
+    Fallback vers openai-whisper si faster-whisper n'est pas installé.
     """
-    import whisper  # type: ignore
+    try:
+        from faster_whisper import WhisperModel  # type: ignore
 
-    model = whisper.load_model("medium")  # "small", "medium", "large" selon le GPU
-    kwargs = {"fp16": False}
-    if language:
-        kwargs["language"] = language
-    result = model.transcribe(str(audio_path), **kwargs)
-    detected = result.get("language", "?")
-    print(f"    Langue détectée : {detected}")
-    return result["text"]
+        model = WhisperModel("large-v3", device="cpu", compute_type="int8")
+        segments, info = model.transcribe(
+            str(audio_path),
+            language=language,  # None = détection auto
+            beam_size=5,
+        )
+        detected = info.language
+        print(f"    Langue détectée : {detected} (prob: {info.language_probability:.0%})")
+        return " ".join(seg.text for seg in segments).strip()
+
+    except ImportError:
+        # Fallback : openai-whisper classique
+        import whisper  # type: ignore
+
+        model = whisper.load_model("medium")
+        kwargs = {"fp16": False}
+        if language:
+            kwargs["language"] = language
+        result = model.transcribe(str(audio_path), **kwargs)
+        detected = result.get("language", "?")
+        print(f"    Langue détectée : {detected}")
+        return result["text"]
 
 
 def _transcribe_whisper_api(audio_path: Path, language: str | None = None) -> str:
