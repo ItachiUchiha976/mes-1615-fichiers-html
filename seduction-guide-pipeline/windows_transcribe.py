@@ -193,7 +193,8 @@ def get_whisper_model():
 def transcribe_audio(audio_path: Path) -> tuple:
     """Transcrit l'audio. Retourne (texte, langue_detectee)."""
     model = get_whisper_model()
-    result = model.transcribe(str(audio_path), fp16=False)
+    # verbose=True affiche les segments au fur et a mesure (progression visible)
+    result = model.transcribe(str(audio_path), fp16=False, verbose=True)
     text = result["text"].strip()
     lang = result.get("language", "inconnu")
     return text, lang
