@@ -48,11 +48,11 @@ CHECKPOINT_FILE = "transcription_checkpoint.json"
 LOG_FILE        = "transcription.log"
 
 # Modele Whisper :
-#   "large-v3"        -> meilleure qualite anglais/espagnol (recommande)
-#   "medium"          -> plus rapide, bonne qualite
-#   "small"           -> rapide, qualite correcte
-#   "distil-large-v3" -> presque aussi bon que large-v3, 2x plus rapide
-WHISPER_MODEL = "large-v3"
+#   "medium"   -> recommande : bonne qualite anglais/espagnol, rapide (defaut)
+#   "large-v2" -> meilleure qualite, plus lent
+#   "small"    -> plus rapide, qualite correcte
+#   "base"     -> tres rapide, qualite basique
+WHISPER_MODEL = "medium"
 
 # Taille max par fichier de sortie (3.5 Mo = safe pour claude.ai)
 MAX_BYTES_PAR_PARTIE = int(3.5 * 1024 * 1024)
@@ -176,7 +176,7 @@ def extract_audio(media_path: Path, audio_path: Path):
         raise RuntimeError(f"ffmpeg erreur : {result.stderr[-300:]}")
 
 
-# -- Transcription faster-whisper ------------------------------------------------
+# -- Transcription openai-whisper ------------------------------------------------
 
 _model_cache = None
 
@@ -184,22 +184,19 @@ def get_whisper_model():
     global _model_cache
     if _model_cache is None:
         log.info(f"Chargement du modele Whisper '{WHISPER_MODEL}'...")
-        log.info("(Premier lancement : telechargement ~1-3 Go, une seule fois)")
-        from faster_whisper import WhisperModel
-        _model_cache = WhisperModel(
-            WHISPER_MODEL,
-            device="cpu",
-            compute_type="int8",
-        )
+        log.info("(Premier lancement : telechargement depuis OpenAI, une seule fois)")
+        import whisper as openai_whisper
+        _model_cache = openai_whisper.load_model(WHISPER_MODEL)
         log.info("Modele charge.")
     return _model_cache
 
 def transcribe_audio(audio_path: Path) -> tuple:
     """Transcrit l'audio. Retourne (texte, langue_detectee)."""
     model = get_whisper_model()
-    segments, info = model.transcribe(str(audio_path), beam_size=5)
-    text = " ".join(seg.text for seg in segments).strip()
-    return text, info.language
+    result = model.transcribe(str(audio_path), fp16=False)
+    text = result["text"].strip()
+    lang = result.get("language", "inconnu")
+    return text, lang
 
 
 # -- Suivi de progression --------------------------------------------------------
