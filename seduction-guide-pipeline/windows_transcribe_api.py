@@ -1,24 +1,32 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-TRANSCRIPTION + PDF - API OPENAI WHISPER - WINDOWS 10
-=======================================================
-Traite TOUS les fichiers utiles d'un dossier :
-  - Videos (.mp4, .mkv, .avi...) -> transcription via API OpenAI Whisper
-  - Audios (.mp3, .wav, .m4a...) -> transcription via API OpenAI Whisper
-  - PDFs                         -> extraction du texte (gratuit, local)
-  - Autres (.zip, .exe...)       -> ignores silencieusement
+TRANSCRIPTION + EXTRACTION COMPLETE - API OPENAI WHISPER - WINDOWS 10
+=======================================================================
+Scanne TOUS les fichiers d'un dossier, affiche ce qu'il trouve,
+puis traite automatiquement tout ce qui est utile :
 
-COUT (videos/audios uniquement) : $0.006 par minute audio
-  Exemple : 50h = 3000 min x $0.006 = ~18$
+  VIDEOS  (.mp4 .mkv .avi .mov...)  -> transcription API OpenAI Whisper
+  AUDIOS  (.mp3 .wav .m4a .ogg...)  -> transcription API OpenAI Whisper
+  PDFs    (.pdf)                    -> extraction texte (PyMuPDF, gratuit)
+  WORD    (.docx)                   -> extraction texte (python-docx, gratuit)
+  POWERPOINT (.pptx)               -> extraction texte des slides (python-pptx)
+  TEXTE   (.txt .md .rtf)          -> lecture directe
+  IMAGES  (.jpg .png .gif .webp...) -> liste des noms (pour reference visuelle)
+  AUTRES  (.zip .exe .html...)      -> ignores (liste affichee)
+
+COUT : $0.006 par minute audio/video uniquement
+  Exemple : 50h video = ~$18
 
 INSTALLATION :
-  pip install openai pymupdf
+  pip install openai pymupdf python-docx python-pptx
 
 USAGE :
-  1. Entre ta cle API OpenAI ci-dessous
+  1. Remplis OPENAI_API_KEY ci-dessous
   2. Double-clique sur ce fichier
-  3. Le script affiche le cout estime, tu confirmes, puis ca demarre
+  3. Selectionne ton dossier FORMATIONS
+  4. Le script affiche tout ce qu'il a trouve et le cout estime
+  5. Tu confirmes -> tout est traite en ~1h
 """
 
 import json
@@ -33,33 +41,33 @@ from datetime import datetime
 
 
 # ================================================================================
-#  CONFIGURATION - METS TA CLE API ICI
+#  CONFIGURATION
 # ================================================================================
 
 OPENAI_API_KEY = "sk-METS_TA_CLE_ICI"
 
-OUTPUT_DIR      = "transcriptions"
-CHECKPOINT_FILE = "transcription_api_checkpoint.json"
-LOG_FILE        = "transcription_api.log"
+OUTPUT_DIR       = "transcriptions"
+CHECKPOINT_FILE  = "transcription_api_checkpoint.json"
+LOG_FILE         = "transcription_api.log"
 
-# Taille max par partie de sortie (3.5 Mo = safe pour claude.ai)
 MAX_BYTES_PAR_PARTIE = int(3.5 * 1024 * 1024)
+MAX_CHUNK_MB         = 24
+CHUNK_DURATION_S     = 600
 
-# Limite API OpenAI Whisper : 25 Mo par appel -> on decoupe par segments de 10 min
-MAX_CHUNK_MB    = 24
-CHUNK_DURATION_S = 600  # 10 minutes
+# ── Categories de fichiers ────────────────────────────────────────────────────
 
-VIDEO_EXTENSIONS = {
-    ".mp4", ".avi", ".mov", ".mkv", ".webm",
-    ".mpeg", ".3gp", ".m4v", ".flv", ".wmv"
-}
-AUDIO_EXTENSIONS = {
-    ".mp3", ".wav", ".aac", ".ogg", ".wma", ".m4a", ".opus", ".flac"
-}
-PDF_EXTENSIONS = {".pdf"}
+VIDEO_EXT = {".mp4", ".avi", ".mov", ".mkv", ".webm", ".mpeg", ".3gp", ".m4v", ".flv", ".wmv"}
+AUDIO_EXT = {".mp3", ".wav", ".aac", ".ogg", ".wma", ".m4a", ".opus", ".flac"}
+PDF_EXT   = {".pdf"}
+WORD_EXT  = {".docx", ".doc"}
+PPT_EXT   = {".pptx", ".ppt"}
+TEXT_EXT  = {".txt", ".md", ".markdown", ".rtf", ".csv"}
+IMAGE_EXT = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp", ".tiff", ".tif", ".svg"}
 
-ALL_MEDIA_EXTENSIONS = VIDEO_EXTENSIONS | AUDIO_EXTENSIONS
-ALL_EXTENSIONS = ALL_MEDIA_EXTENSIONS | PDF_EXTENSIONS
+# Tout ce qu'on traite (pas les images ni les autres)
+PROCESS_EXT = VIDEO_EXT | AUDIO_EXT | PDF_EXT | WORD_EXT | PPT_EXT | TEXT_EXT
+# Les images : on les liste seulement (pas de contenu extractible sans vision API)
+LIST_ONLY_EXT = IMAGE_EXT
 
 # ================================================================================
 
@@ -88,22 +96,19 @@ def demander_dossier() -> Path:
         root.withdraw()
         root.attributes("-topmost", True)
         print("\nUne fenetre de selection de dossier va s'ouvrir...")
-        print("Choisis le dossier PRINCIPAL qui contient toutes tes formations.\n")
-        dossier = filedialog.askdirectory(
-            title="Choisis le dossier contenant tes formations"
-        )
+        print("Choisis le dossier FORMATIONS sur ta cle USB.\n")
+        dossier = filedialog.askdirectory(title="Choisis ton dossier FORMATIONS")
         root.destroy()
         return Path(dossier) if dossier else Path(".")
     except Exception as e:
-        print(f"Fenetre impossible ({e}). Utilisation du dossier courant.")
+        print(f"Fenetre impossible ({e}). Dossier courant utilise.")
         return Path(".")
 
 
 # -- Tri naturel -----------------------------------------------------------------
 
 def natural_key(name: str) -> list:
-    return [int(c) if c.isdigit() else c.lower()
-            for c in re.split(r"(\d+)", name)]
+    return [int(c) if c.isdigit() else c.lower() for c in re.split(r"(\d+)", name)]
 
 def sorted_naturally(paths):
     return sorted(paths, key=lambda p: natural_key(p.name))
@@ -125,25 +130,46 @@ def save_checkpoint(data: dict):
     )
 
 
-# -- Duree des fichiers (pour estimation du cout) --------------------------------
+# -- Scanner d'extensions --------------------------------------------------------
+
+def scanner_extensions(root: Path) -> dict:
+    """
+    Parcourt tout le dossier et compte les fichiers par extension.
+    Retourne un dict {extension: nombre}, trie par nombre decroissant.
+    """
+    counts = {}
+    for f in root.rglob("*"):
+        if f.is_file():
+            ext = f.suffix.lower() if f.suffix else "(sans extension)"
+            counts[ext] = counts.get(ext, 0) + 1
+    return dict(sorted(counts.items(), key=lambda x: -x[1]))
+
+
+def categoriser_fichier(ext: str) -> str:
+    """Retourne la categorie d'un fichier selon son extension."""
+    if ext in VIDEO_EXT:   return "VIDEO (Whisper API)"
+    if ext in AUDIO_EXT:   return "AUDIO (Whisper API)"
+    if ext in PDF_EXT:     return "PDF (extraction gratuite)"
+    if ext in WORD_EXT:    return "WORD (extraction gratuite)"
+    if ext in PPT_EXT:     return "POWERPOINT (extraction gratuite)"
+    if ext in TEXT_EXT:    return "TEXTE (lecture directe)"
+    if ext in IMAGE_EXT:   return "IMAGE (liste uniquement)"
+    return "IGNORE"
+
+
+# -- Duree des fichiers ----------------------------------------------------------
 
 def get_duration_seconds(media_path: Path) -> float:
-    """Retourne la duree en secondes via ffprobe."""
-    cmd = [
-        "ffprobe", "-v", "quiet",
-        "-print_format", "json",
-        "-show_format",
-        str(media_path)
-    ]
+    cmd = ["ffprobe", "-v", "quiet", "-print_format", "json",
+           "-show_format", str(media_path)]
     startupinfo = None
     if sys.platform == "win32":
         startupinfo = subprocess.STARTUPINFO()
         startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True,
-                                startupinfo=startupinfo, timeout=30)
-        data = json.loads(result.stdout)
-        return float(data["format"]["duration"])
+        r = subprocess.run(cmd, capture_output=True, text=True,
+                           startupinfo=startupinfo, timeout=30)
+        return float(json.loads(r.stdout)["format"]["duration"])
     except Exception:
         return 0.0
 
@@ -151,32 +177,22 @@ def get_duration_seconds(media_path: Path) -> float:
 # -- Extraction audio ------------------------------------------------------------
 
 def extract_audio(media_path: Path, audio_path: Path):
-    """Convertit video ou audio en MP3 mono 16 kHz."""
-    cmd = [
-        "ffmpeg", "-y", "-i", str(media_path),
-        "-vn", "-ac", "1", "-ar", "16000", "-b:a", "64k",
-        str(audio_path),
-    ]
+    cmd = ["ffmpeg", "-y", "-i", str(media_path),
+           "-vn", "-ac", "1", "-ar", "16000", "-b:a", "64k", str(audio_path)]
     startupinfo = None
     if sys.platform == "win32":
         startupinfo = subprocess.STARTUPINFO()
         startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-    result = subprocess.run(cmd, capture_output=True, text=True,
-                            startupinfo=startupinfo)
-    if result.returncode != 0:
-        raise RuntimeError(f"ffmpeg erreur : {result.stderr[-300:]}")
+    r = subprocess.run(cmd, capture_output=True, text=True, startupinfo=startupinfo)
+    if r.returncode != 0:
+        raise RuntimeError(f"ffmpeg erreur : {r.stderr[-300:]}")
 
 
 def split_audio_chunks(audio_path: Path, out_dir: Path) -> list:
-    """Coupe l'audio en segments de 10 minutes (limite API 25 Mo)."""
     out_dir.mkdir(parents=True, exist_ok=True)
     pattern = str(out_dir / "chunk_%04d.mp3")
-    cmd = [
-        "ffmpeg", "-y", "-i", str(audio_path),
-        "-f", "segment",
-        "-segment_time", str(CHUNK_DURATION_S),
-        "-c", "copy", pattern
-    ]
+    cmd = ["ffmpeg", "-y", "-i", str(audio_path), "-f", "segment",
+           "-segment_time", str(CHUNK_DURATION_S), "-c", "copy", pattern]
     startupinfo = None
     if sys.platform == "win32":
         startupinfo = subprocess.STARTUPINFO()
@@ -185,95 +201,182 @@ def split_audio_chunks(audio_path: Path, out_dir: Path) -> list:
     return sorted(out_dir.glob("chunk_*.mp3"))
 
 
-# -- Extraction PDF --------------------------------------------------------------
+# -- Extraction texte : PDF, Word, PowerPoint, texte brut ------------------------
 
-def extract_pdf_text(pdf_path: Path) -> str:
-    """
-    Extrait tout le texte d'un PDF avec PyMuPDF (fitz).
-    Gratuit, local, aucun appel API.
-    Retourne le texte brut avec les numeros de page.
-    """
+def extract_pdf(pdf_path: Path) -> tuple[str, int]:
+    """Retourne (texte, nb_pages)."""
     try:
-        import fitz  # PyMuPDF
+        import fitz
         doc = fitz.open(str(pdf_path))
         pages = []
         for i, page in enumerate(doc, 1):
-            text = page.get_text().strip()
-            if text:
-                pages.append(f"--- Page {i} ---\n{text}")
+            t = page.get_text().strip()
+            if t:
+                pages.append(f"--- Page {i} ---\n{t}")
         doc.close()
-        return "\n\n".join(pages) if pages else "(PDF sans texte extractible - probablement scanne)"
+        if not pages:
+            return "(PDF sans texte extractible - probablement scanne en image)", 0
+        return "\n\n".join(pages), len(pages)
     except ImportError:
-        return "(PyMuPDF non installe - lance : pip install pymupdf)"
+        return "(ERREUR : pip install pymupdf)", 0
     except Exception as e:
-        return f"(Erreur extraction PDF : {e})"
+        return f"(Erreur PDF : {e})", 0
 
 
-def process_pdf(pdf_path: Path, output_txt: Path, checkpoint: dict) -> bool:
-    """Extrait le texte d'un PDF et sauvegarde le .txt."""
-    key = str(pdf_path)
+def extract_docx(docx_path: Path) -> str:
+    """Extrait le texte d'un fichier Word .docx."""
+    try:
+        from docx import Document
+        doc = Document(str(docx_path))
+        paragraphs = [p.text.strip() for p in doc.paragraphs if p.text.strip()]
+        # Inclure aussi les tableaux
+        for table in doc.tables:
+            for row in table.rows:
+                cells = [c.text.strip() for c in row.cells if c.text.strip()]
+                if cells:
+                    paragraphs.append(" | ".join(cells))
+        return "\n\n".join(paragraphs) if paragraphs else "(Document Word vide)"
+    except ImportError:
+        return "(ERREUR : pip install python-docx)"
+    except Exception as e:
+        return f"(Erreur Word : {e})"
+
+
+def extract_pptx(pptx_path: Path) -> tuple[str, int]:
+    """Extrait le texte de chaque slide d'un PowerPoint."""
+    try:
+        from pptx import Presentation
+        prs = Presentation(str(pptx_path))
+        slides = []
+        for i, slide in enumerate(prs.slides, 1):
+            texts = []
+            for shape in slide.shapes:
+                if hasattr(shape, "text") and shape.text.strip():
+                    texts.append(shape.text.strip())
+            if texts:
+                slides.append(f"--- Slide {i} ---\n" + "\n".join(texts))
+        if not slides:
+            return "(PowerPoint sans texte extractible)", 0
+        return "\n\n".join(slides), len(slides)
+    except ImportError:
+        return "(ERREUR : pip install python-pptx)", 0
+    except Exception as e:
+        return f"(Erreur PowerPoint : {e})", 0
+
+
+def extract_text_file(txt_path: Path) -> str:
+    """Lit un fichier texte brut (.txt, .md, .csv, .rtf)."""
+    for encoding in ("utf-8", "latin-1", "cp1252"):
+        try:
+            return txt_path.read_text(encoding=encoding).strip()
+        except Exception:
+            continue
+    return "(Impossible de lire ce fichier texte)"
+
+
+# -- Traitement d'un fichier non-media (PDF/Word/PPT/texte) ----------------------
+
+def process_text_file(file_path: Path, output_txt: Path, checkpoint: dict) -> bool:
+    key = str(file_path)
     if checkpoint.get(key) == "ok" and output_txt.exists():
-        log.info(f"  [SKIP] Deja traite : {pdf_path.name}")
+        log.info(f"  [SKIP] {file_path.name}")
         return True
 
-    log.info(f"  --> [PDF] {pdf_path.name}")
+    ext = file_path.suffix.lower()
     output_txt.parent.mkdir(parents=True, exist_ok=True)
+
     try:
-        text = extract_pdf_text(pdf_path)
-        nb_pages = text.count("--- Page ")
+        if ext in PDF_EXT:
+            text, nb = extract_pdf(file_path)
+            type_str = f"PDF ({nb} pages)"
+            log.info(f"  --> [PDF] {file_path.name} ({nb} pages)")
+        elif ext in WORD_EXT:
+            text = extract_docx(file_path)
+            type_str = "WORD"
+            log.info(f"  --> [WORD] {file_path.name}")
+        elif ext in PPT_EXT:
+            text, nb = extract_pptx(file_path)
+            type_str = f"POWERPOINT ({nb} slides)"
+            log.info(f"  --> [PPT] {file_path.name} ({nb} slides)")
+        elif ext in TEXT_EXT:
+            text = extract_text_file(file_path)
+            type_str = "TEXTE"
+            log.info(f"  --> [TXT] {file_path.name}")
+        else:
+            return False
+
         header = (
-            f"=== FICHIER : {pdf_path.name} ===\n"
-            f"=== TYPE : PDF ===\n"
-            f"=== DOSSIER : {pdf_path.parent.name} ===\n"
-            f"=== PAGES : {nb_pages} ===\n\n"
+            f"=== FICHIER : {file_path.name} ===\n"
+            f"=== TYPE : {type_str} ===\n"
+            f"=== DOSSIER : {file_path.parent.name} ===\n\n"
         )
         output_txt.write_text(header + text + "\n", encoding="utf-8")
         checkpoint[key] = "ok"
         save_checkpoint(checkpoint)
-        log.info(f"    OK ({nb_pages} pages) : {output_txt.name}")
+        log.info(f"    OK : {output_txt.name}")
         return True
     except Exception as e:
-        log.error(f"    ECHEC PDF {pdf_path.name} : {e}")
+        log.error(f"    ECHEC {file_path.name} : {e}")
         checkpoint[key] = f"erreur: {e}"
         save_checkpoint(checkpoint)
         return False
 
 
-# -- Transcription API -----------------------------------------------------------
+# -- Traitement images (liste uniquement) ----------------------------------------
+
+def process_images_list(images: list, output_dir: Path, media_root: Path):
+    """
+    Cree un fichier 'LISTE_IMAGES.txt' repertoriant toutes les images trouvees.
+    Les images ne peuvent pas etre transcrites en texte sans API Vision,
+    mais leur liste permet a Claude de savoir qu'elles existent.
+    """
+    if not images:
+        return
+    output_file = output_dir / "LISTE_IMAGES.txt"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    with open(output_file, "w", encoding="utf-8") as f:
+        f.write("=== LISTE DES IMAGES TROUVEES DANS LES FORMATIONS ===\n")
+        f.write(f"=== Total : {len(images)} images ===\n\n")
+        f.write("Ces images ne sont pas transcrites automatiquement.\n")
+        f.write("Si certaines contiennent des schemas ou infographies importants,\n")
+        f.write("tu peux les envoyer directement a Claude separement.\n\n")
+        current_folder = None
+        for img in sorted_naturally(images):
+            try:
+                rel = img.relative_to(media_root)
+            except ValueError:
+                rel = img
+            folder = str(rel.parent)
+            if folder != current_folder:
+                f.write(f"\n[{folder}]\n")
+                current_folder = folder
+            f.write(f"  - {img.name}\n")
+    log.info(f"  Liste des images sauvegardee : {output_file}")
+
+
+# -- Transcription API OpenAI ----------------------------------------------------
 
 def transcribe_with_api(audio_path: Path) -> tuple:
-    """
-    Envoie l'audio a l'API OpenAI Whisper.
-    Si le fichier depasse 24 Mo, le decoupe automatiquement en segments.
-    Retourne (texte_complet, langue_detectee).
-    """
     from openai import OpenAI
     client = OpenAI(api_key=OPENAI_API_KEY)
-
     file_size_mb = audio_path.stat().st_size / (1024 * 1024)
 
     if file_size_mb <= MAX_CHUNK_MB:
         with open(audio_path, "rb") as f:
             resp = client.audio.transcriptions.create(
-                model="whisper-1",
-                file=f,
-                response_format="verbose_json"
+                model="whisper-1", file=f, response_format="verbose_json"
             )
-        lang = getattr(resp, "language", "en")
-        return resp.text.strip(), lang
+        return resp.text.strip(), getattr(resp, "language", "en")
     else:
-        log.info(f"    Fichier {file_size_mb:.0f} Mo > 24 Mo -> decoupage en segments...")
+        log.info(f"    Fichier {file_size_mb:.0f} Mo -> decoupage en segments 10 min...")
         chunks_dir = audio_path.parent / (audio_path.stem + "_chunks")
         chunks = split_audio_chunks(audio_path, chunks_dir)
-        texts = []
-        lang = "en"
+        texts, lang = [], "en"
         for j, chunk in enumerate(chunks, 1):
-            log.info(f"    Segment {j}/{len(chunks)} ({chunk.stem})...")
+            log.info(f"    Segment {j}/{len(chunks)}...")
             with open(chunk, "rb") as f:
                 resp = client.audio.transcriptions.create(
-                    model="whisper-1",
-                    file=f,
-                    response_format="verbose_json"
+                    model="whisper-1", file=f, response_format="verbose_json"
                 )
             texts.append(resp.text.strip())
             if j == 1:
@@ -281,39 +384,13 @@ def transcribe_with_api(audio_path: Path) -> tuple:
         return " ".join(texts), lang
 
 
-# -- Suivi de progression --------------------------------------------------------
-
-def format_duree(secondes: float) -> str:
-    s = int(secondes)
-    h, m, sec = s // 3600, (s % 3600) // 60, s % 60
-    if h > 0:
-        return f"{h}h{m:02d}m{sec:02d}s"
-    return f"{m}m{sec:02d}s"
-
-def affiche_barre(i, total, debut_global, success, errors, durees):
-    pct = i / total * 100
-    elapsed = time.time() - debut_global
-    eta_str = format_duree((sum(durees)/len(durees)) * (total - i)) if durees else "calcul..."
-    largeur = 28
-    rempli = int(largeur * i / total)
-    barre = "#" * rempli + "-" * (largeur - rempli)
-    log.info(
-        f"  [{barre}] {pct:5.1f}%  {i}/{total}  |  "
-        f"OK:{success} Err:{errors}  |  "
-        f"Ecoule: {format_duree(elapsed)}  |  Reste estim.: {eta_str}"
-    )
-
-
-# -- Traitement d'un fichier -----------------------------------------------------
-
 def process_media(media_path: Path, output_txt: Path, checkpoint: dict) -> tuple:
     key = str(media_path)
-
     if checkpoint.get(key) == "ok" and output_txt.exists():
-        log.info(f"  [SKIP] Deja transcrit : {media_path.name}")
+        log.info(f"  [SKIP] {media_path.name}")
         return True, 0.0
 
-    type_f = "AUDIO" if media_path.suffix.lower() in AUDIO_EXTENSIONS else "VIDEO"
+    type_f = "AUDIO" if media_path.suffix.lower() in AUDIO_EXT else "VIDEO"
     log.info(f"  --> [{type_f}] {media_path.name}")
     output_txt.parent.mkdir(parents=True, exist_ok=True)
     t_start = time.time()
@@ -324,7 +401,6 @@ def process_media(media_path: Path, output_txt: Path, checkpoint: dict) -> tuple
                 audio = Path(tmp) / "audio.mp3"
                 extract_audio(media_path, audio)
                 text, lang = transcribe_with_api(audio)
-
             header = (
                 f"=== FICHIER : {media_path.name} ===\n"
                 f"=== TYPE : {type_f} ===\n"
@@ -337,33 +413,52 @@ def process_media(media_path: Path, output_txt: Path, checkpoint: dict) -> tuple
             duree = time.time() - t_start
             log.info(f"    OK ({lang}) en {format_duree(duree)}")
             return True, duree
-
         except Exception as e:
             if attempt < 3:
                 wait = 15 * attempt
-                log.warning(f"    Tentative {attempt}/3 echouee : {e}. Pause {wait}s...")
+                log.warning(f"    Tentative {attempt}/3 : {e}. Pause {wait}s...")
                 time.sleep(wait)
             else:
-                log.error(f"    ECHEC definitif : {media_path.name} -> {e}")
+                log.error(f"    ECHEC : {media_path.name} -> {e}")
                 checkpoint[key] = f"erreur: {e}"
                 save_checkpoint(checkpoint)
                 return False, 0.0
 
 
+# -- Suivi de progression --------------------------------------------------------
+
+def format_duree(secondes: float) -> str:
+    s = int(secondes)
+    h, m, sec = s // 3600, (s % 3600) // 60, s % 60
+    if h > 0:
+        return f"{h}h{m:02d}m{sec:02d}s"
+    return f"{m}m{sec:02d}s"
+
+def affiche_barre(i, total, debut, success, errors, durees):
+    pct = i / total * 100
+    elapsed = time.time() - debut
+    eta = format_duree((sum(durees)/len(durees)) * (total-i)) if durees else "calcul..."
+    largeur = 26
+    rempli = int(largeur * i / total)
+    barre = "#" * rempli + "-" * (largeur - rempli)
+    log.info(
+        f"  [{barre}] {pct:5.1f}%  {i}/{total}  |  "
+        f"OK:{success} Err:{errors}  |  "
+        f"Ecoule:{format_duree(elapsed)}  Reste:{eta}"
+    )
+
+
 # -- Fusion finale ---------------------------------------------------------------
 
 def fusionne_tout(output_dir: Path, base_name: str = "transcription_COMPLETE"):
-    log.info("\nFusion et decoupage automatique des .txt...")
+    log.info("\nFusion et decoupage en parties de 3.5 Mo...")
 
     dossiers = {}
     for txt in output_dir.rglob("*.txt"):
         dossiers.setdefault(txt.parent, []).append(txt)
 
-    dossiers_tries = sorted(
-        dossiers.keys(),
-        key=lambda p: (-len(p.parts), natural_key(p.name))
-    )
-
+    dossiers_tries = sorted(dossiers.keys(),
+                            key=lambda p: (-len(p.parts), natural_key(p.name)))
     sections = []
     for dossier in dossiers_tries:
         txts = sorted_naturally(dossiers[dossier])
@@ -374,16 +469,15 @@ def fusionne_tout(output_dir: Path, base_name: str = "transcription_COMPLETE"):
             nom = dossier.name
         sections.append((nom, txts))
 
-    total_fichiers = sum(len(t) for _, t in sections)
+    total_f = sum(len(t) for _, t in sections)
     date_str = datetime.now().strftime("%d/%m/%Y %H:%M")
 
-    def ouvre_partie(num: int):
+    def ouvre_partie(num):
         nom_f = f"{base_name}_PARTIE_{num}.txt"
         f = open(nom_f, "w", encoding="utf-8")
         f.write("=" * 70 + "\n")
-        f.write("  TRANSCRIPTIONS - FORMATIONS SUR LA SEDUCTION\n")
-        f.write(f"  PARTIE {num} | Genere le : {date_str}\n")
-        f.write(f"  Total fichiers (toutes parties) : {total_fichiers}\n")
+        f.write("  TRANSCRIPTIONS + DOCUMENTS - FORMATIONS SUR LA SEDUCTION\n")
+        f.write(f"  PARTIE {num} | {date_str} | {total_f} fichiers au total\n")
         f.write("=" * 70 + "\n\n")
         return f, nom_f
 
@@ -392,11 +486,11 @@ def fusionne_tout(output_dir: Path, base_name: str = "transcription_COMPLETE"):
     octets = 0
     fichiers_crees = [nom_courant]
 
-    # Sommaire GPS
+    # Sommaire
     lignes = [
         "+" + "-" * 68 + "+\n",
         "|  SOMMAIRE - ARBORESCENCE COMPLETE DES FORMATIONS                |\n",
-        "|  (dans l'ordre exact ou les transcriptions apparaissent)         |\n",
+        "|  Videos, audios, PDFs, Word, PowerPoint, textes                 |\n",
         "+" + "-" * 68 + "+\n\n"
     ]
     num = 1
@@ -408,45 +502,37 @@ def fusionne_tout(output_dir: Path, base_name: str = "transcription_COMPLETE"):
             lignes.append(f"{indent}    [{num:03d}] {txt.stem}\n")
             num += 1
         lignes.append("\n")
-    lignes += ["\n" + "=" * 70 + "\n",
-               "  FIN DU SOMMAIRE - DEBUT DES TRANSCRIPTIONS\n",
-               "=" * 70 + "\n\n"]
-
+    lignes += ["\n" + "=" * 70 + "\n", "  FIN DU SOMMAIRE\n", "=" * 70 + "\n\n"]
     bloc = "".join(lignes)
     f.write(bloc)
     octets += len(bloc.encode("utf-8"))
 
     for nom_section, txts in sections:
-        header = ("\n" + "-" * 60 + "\n"
-                  f"  SECTION : {nom_section}\n"
-                  + "-" * 60 + "\n\n")
-        hb = len(header.encode("utf-8"))
-        if octets + hb > MAX_BYTES_PAR_PARTIE:
+        sh = ("\n" + "-" * 60 + "\n" + f"  SECTION : {nom_section}\n"
+              + "-" * 60 + "\n\n")
+        shb = len(sh.encode("utf-8"))
+        if octets + shb > MAX_BYTES_PAR_PARTIE:
             f.close()
-            log.info(f"  -> Partie {partie_num} terminee ({octets/1024/1024:.1f} Mo)")
             partie_num += 1
             f, nom_courant = ouvre_partie(partie_num)
             fichiers_crees.append(nom_courant)
             octets = 0
-        f.write(header)
-        octets += hb
-
+        f.write(sh)
+        octets += shb
         for txt in txts:
             contenu = txt.read_text(encoding="utf-8") + "\n\n"
             cb = len(contenu.encode("utf-8"))
             if octets > 0 and octets + cb > MAX_BYTES_PAR_PARTIE:
                 f.close()
-                log.info(f"  -> Partie {partie_num} terminee ({octets/1024/1024:.1f} Mo)")
                 partie_num += 1
                 f, nom_courant = ouvre_partie(partie_num)
                 fichiers_crees.append(nom_courant)
                 octets = 0
             f.write(contenu)
             octets += cb
-
     f.close()
-    log.info(f"  -> Partie {partie_num} terminee ({octets/1024/1024:.1f} Mo)")
-    log.info(f"\nFusion terminee : {partie_num} fichier(s)")
+
+    log.info(f"Fusion terminee : {partie_num} partie(s)")
     for nf in fichiers_crees:
         taille = Path(nf).stat().st_size / 1024 / 1024
         log.info(f"  {nf}  ({taille:.1f} Mo)")
@@ -458,15 +544,15 @@ def fusionne_tout(output_dir: Path, base_name: str = "transcription_COMPLETE"):
 def main():
     setup_logging()
 
-    # Verifier la cle API
+    # Verifier cle API
     if OPENAI_API_KEY == "sk-METS_TA_CLE_ICI":
         print("\n" + "=" * 70)
         print("  ERREUR : Cle API OpenAI manquante !")
         print("=" * 70)
         print("\nOuvre ce fichier avec Notepad++ et remplace :")
-        print("  sk-METS_TA_CLE_ICI")
-        print("par ta vraie cle API (elle commence par sk-proj-... ou sk-...)")
-        print("\nPour obtenir une cle : https://platform.openai.com/api-keys")
+        print("  OPENAI_API_KEY = \"sk-METS_TA_CLE_ICI\"")
+        print("par ta vraie cle.")
+        print("\nObtenir une cle : https://platform.openai.com/api-keys")
         input("\nAppuie sur Entree pour fermer...")
         sys.exit(1)
 
@@ -474,56 +560,85 @@ def main():
     try:
         subprocess.run(["ffmpeg", "-version"], capture_output=True, check=True)
     except (FileNotFoundError, subprocess.CalledProcessError):
-        print("ERREUR : ffmpeg n'est pas installe.")
-        print("Lance : winget install ffmpeg  (dans cmd administrateur)")
+        print("ERREUR : ffmpeg introuvable.")
+        print("Lance : winget install ffmpeg  (cmd administrateur)")
         input("\nAppuie sur Entree pour fermer...")
         sys.exit(1)
 
     # Choisir le dossier
-    if len(sys.argv) > 1:
-        media_root = Path(sys.argv[1])
-    else:
-        media_root = demander_dossier()
+    media_root = Path(sys.argv[1]) if len(sys.argv) > 1 else demander_dossier()
     media_root = media_root.resolve()
     output_dir = Path(OUTPUT_DIR).resolve()
 
     log.info("=" * 70)
-    log.info("  TRANSCRIPTION VIA API OPENAI WHISPER")
+    log.info("  TRANSCRIPTION + EXTRACTION COMPLETE")
     log.info("=" * 70)
-    log.info(f"  Dossier source     : {media_root}")
-    log.info(f"  Sorties .txt       : {output_dir}")
-    log.info(f"  Modele API         : whisper-1 (equivalent large-v2)")
-    log.info(f"  Taille max/partie  : {MAX_BYTES_PAR_PARTIE/1024/1024:.1f} Mo")
+    log.info(f"  Dossier source : {media_root}")
+    log.info(f"  Sorties .txt   : {output_dir}")
     log.info("=" * 70 + "\n")
 
-    # Collecter TOUS les fichiers (video + audio + PDF)
-    tous_fichiers = sorted_naturally([
-        p for p in media_root.rglob("*")
-        if p.is_file() and p.suffix.lower() in ALL_EXTENSIONS
-    ])
+    # ── SCAN DE TOUTES LES EXTENSIONS ────────────────────────────────────────
+    log.info("Scan du dossier en cours...\n")
+    counts = scanner_extensions(media_root)
 
-    if not tous_fichiers:
-        log.error(f"Aucun fichier video/audio/PDF trouve dans : {media_root}")
+    if not counts:
+        log.error(f"Dossier vide ou introuvable : {media_root}")
         input("Appuie sur Entree pour fermer...")
         sys.exit(1)
 
-    medias = [f for f in tous_fichiers if f.suffix.lower() in ALL_MEDIA_EXTENSIONS]
-    pdfs   = [f for f in tous_fichiers if f.suffix.lower() in PDF_EXTENSIONS]
+    # Afficher le tableau complet
+    log.info("=" * 70)
+    log.info("  FICHIERS TROUVES PAR TYPE")
+    log.info("=" * 70)
+    log.info(f"  {'Extension':<15} {'Nombre':>8}    {'Action'}")
+    log.info(f"  {'-'*15} {'-'*8}    {'-'*35}")
 
-    nb_videos = sum(1 for m in medias if m.suffix.lower() in VIDEO_EXTENSIONS)
-    nb_audios = sum(1 for m in medias if m.suffix.lower() in AUDIO_EXTENSIONS)
-    nb_pdfs   = len(pdfs)
-    log.info(f"Fichiers trouves : {len(tous_fichiers)} total")
-    log.info(f"  -> {nb_videos} videos, {nb_audios} audios (API Whisper, payant)")
-    log.info(f"  -> {nb_pdfs} PDFs (extraction locale, GRATUIT)")
+    total_tous = 0
+    for ext, nb in counts.items():
+        categorie = categoriser_fichier(ext)
+        log.info(f"  {ext:<15} {nb:>8}    {categorie}")
+        total_tous += nb
 
-    # Estimation du cout (videos/audios via API, PDFs = gratuit)
+    log.info(f"  {'-'*15} {'-'*8}")
+    log.info(f"  {'TOTAL':<15} {total_tous:>8}")
+    log.info("=" * 70 + "\n")
+
+    # Collecter les fichiers par categorie
+    tous = sorted_naturally([p for p in media_root.rglob("*") if p.is_file()])
+
+    medias   = [f for f in tous if f.suffix.lower() in VIDEO_EXT | AUDIO_EXT]
+    docs     = [f for f in tous if f.suffix.lower() in PDF_EXT | WORD_EXT | PPT_EXT | TEXT_EXT]
+    images   = [f for f in tous if f.suffix.lower() in IMAGE_EXT]
+    ignores  = [f for f in tous if f.suffix.lower() not in PROCESS_EXT | LIST_ONLY_EXT]
+
+    nb_v = sum(1 for f in medias if f.suffix.lower() in VIDEO_EXT)
+    nb_a = sum(1 for f in medias if f.suffix.lower() in AUDIO_EXT)
+    nb_p = sum(1 for f in docs   if f.suffix.lower() in PDF_EXT)
+    nb_w = sum(1 for f in docs   if f.suffix.lower() in WORD_EXT)
+    nb_x = sum(1 for f in docs   if f.suffix.lower() in PPT_EXT)
+    nb_t = sum(1 for f in docs   if f.suffix.lower() in TEXT_EXT)
+
+    log.info(f"RESUME DES TRAITEMENTS :")
+    log.info(f"  {nb_v} videos         -> Whisper API (payant)")
+    log.info(f"  {nb_a} audios         -> Whisper API (payant)")
+    log.info(f"  {nb_p} PDFs           -> PyMuPDF (gratuit)")
+    log.info(f"  {nb_w} Word (.docx)   -> python-docx (gratuit)")
+    log.info(f"  {nb_x} PowerPoint     -> python-pptx (gratuit)")
+    log.info(f"  {nb_t} fichiers texte -> lecture directe (gratuit)")
+    log.info(f"  {len(images)} images       -> liste des noms seulement")
+    log.info(f"  {len(ignores)} autres       -> ignores")
+
+    if not medias and not docs:
+        log.error("Aucun fichier a traiter trouve.")
+        input("Appuie sur Entree pour fermer...")
+        sys.exit(1)
+
+    # ── ESTIMATION DU COUT ───────────────────────────────────────────────────
     if medias:
-        log.info(f"\nCalcul de la duree totale des videos/audios (1-3 minutes)...\n")
+        log.info(f"\nCalcul de la duree totale des {len(medias)} videos/audios...\n")
         duree_totale_s = 0.0
         for i, m in enumerate(medias, 1):
-            d = get_duration_seconds(m)
-            duree_totale_s += d
+            duree_totale_s += get_duration_seconds(m)
             print(f"\r  Analyse {i}/{len(medias)} : {m.name[:50]:<50}", end="", flush=True)
         print()
     else:
@@ -534,59 +649,61 @@ def main():
     marge = cout + 3
 
     log.info("\n" + "=" * 70)
-    log.info("  ESTIMATION DU COUT AVANT DE COMMENCER")
+    log.info("  ESTIMATION DU COUT")
     log.info("=" * 70)
     if medias:
-        log.info(f"  Videos/Audios a transcrire : {len(medias)} fichiers")
-        log.info(f"  Duree totale               : {format_duree(duree_totale_s)} ({duree_min:.0f} min)")
-        log.info(f"  Tarif API OpenAI Whisper   : $0.006 / minute")
+        log.info(f"  Duree totale videos/audios : {format_duree(duree_totale_s)} ({duree_min:.0f} min)")
+        log.info(f"  Tarif Whisper API          : $0.006 / minute")
         log.info(f"  COUT ESTIME                : ${cout:.2f}")
-        log.info(f"  Credits recommandes        : au moins ${marge:.0f} (avec marge)")
+        log.info(f"  Credits recommandes        : au moins ${marge:.0f}")
     else:
-        log.info("  Aucun fichier video/audio -> cout API : $0.00")
-    log.info(f"  PDFs a extraire (GRATUIT)  : {nb_pdfs} fichiers")
-    log.info(f"  Duree totale traitement    : ~30 a 90 minutes")
+        log.info("  Aucun video/audio -> cout API : $0.00")
+    log.info(f"  Documents/PDFs/textes      : GRATUIT")
+    log.info(f"  Duree totale estimee       : ~30 a 90 minutes")
     log.info("=" * 70)
     if medias:
         log.info(f"\n  Verifie tes credits : https://platform.openai.com/usage")
     log.info("")
 
-    reponse = input("Continuer ? (oui / non) : ").strip().lower()
+    reponse = input("Tout traiter maintenant ? (oui / non) : ").strip().lower()
     if reponse not in ("oui", "o", "yes", "y"):
         print("Annule.")
         sys.exit(0)
 
-    # ── Etape 1 : Extraction des PDFs (gratuit, local) ──────────────────────────
     checkpoint = load_checkpoint()
+    output_dir.mkdir(parents=True, exist_ok=True)
 
-    if pdfs:
-        log.info(f"\n--- ETAPE 1/2 : Extraction des PDFs ({nb_pdfs} fichiers) ---\n")
-        pdf_ok, pdf_err = 0, 0
-        for i, pdf in enumerate(pdfs, 1):
+    # ── ETAPE 1 : Documents (gratuit) ────────────────────────────────────────
+    if docs:
+        log.info(f"\n--- ETAPE 1/3 : Documents ({len(docs)} fichiers, GRATUIT) ---\n")
+        ok_d, err_d = 0, 0
+        for i, doc in enumerate(docs, 1):
             try:
-                rel = pdf.relative_to(media_root)
+                rel = doc.relative_to(media_root)
             except ValueError:
-                rel = Path(pdf.name)
-            output_txt = output_dir / rel.parent / (pdf.stem + ".txt")
-            log.info(f"[{i}/{nb_pdfs}] {rel}")
-            if process_pdf(pdf, output_txt, checkpoint):
-                pdf_ok += 1
+                rel = Path(doc.name)
+            output_txt = output_dir / rel.parent / (doc.stem + ".txt")
+            log.info(f"[{i}/{len(docs)}] {rel}")
+            if process_text_file(doc, output_txt, checkpoint):
+                ok_d += 1
             else:
-                pdf_err += 1
-        log.info(f"\nPDFs : {pdf_ok} OK, {pdf_err} erreur(s)")
+                err_d += 1
+        log.info(f"\nDocuments : {ok_d} OK, {err_d} erreur(s)")
 
-    # ── Etape 2 : Transcription des videos/audios (API) ─────────────────────────
-    if not medias:
-        log.info("\nAucun fichier video/audio a transcrire.")
-    else:
+    # ── ETAPE 2 : Images (liste uniquement) ─────────────────────────────────
+    if images:
+        log.info(f"\n--- ETAPE 2/3 : Images ({len(images)}, liste uniquement) ---")
+        process_images_list(images, output_dir, media_root)
+
+    # ── ETAPE 3 : Videos/Audios (API Whisper) ────────────────────────────────
+    if medias:
         total = len(medias)
         deja = sum(1 for m in medias if checkpoint.get(str(m)) == "ok")
-        log.info(f"\n--- ETAPE 2/2 : Transcription videos/audios ({total} fichiers) ---")
+        log.info(f"\n--- ETAPE 3/3 : Videos/Audios ({total} fichiers, API) ---")
         log.info(f"  Deja transcrits   : {deja} [SKIP]")
         log.info(f"  Restant a traiter : {total - deja}\n")
 
-        success, errors = 0, 0
-        durees = []
+        success, errors, durees = 0, 0, []
         debut_global = time.time()
 
         for i, media in enumerate(medias, 1):
@@ -605,34 +722,35 @@ def main():
                 errors += 1
             affiche_barre(i, total, debut_global, success, errors, durees)
 
-        temps_total = time.time() - debut_global
         log.info("\n" + "=" * 70)
-        log.info("  TERMINE !")
-        log.info(f"  Videos/Audios transcrits : {success}/{total}")
-        log.info(f"  Erreurs                  : {errors}")
-        log.info(f"  Temps total              : {format_duree(temps_total)}")
-        log.info(f"  Cout reel (estime)       : ${cout:.2f}")
+        log.info(f"  Videos/Audios : {success}/{total} OK  |  Erreurs : {errors}")
+        log.info(f"  Cout reel     : ~${cout:.2f}")
         log.info("=" * 70)
 
-    # ── Fusion finale ────────────────────────────────────────────────────────────
+    # ── Fusion finale ────────────────────────────────────────────────────────
     fichiers = fusionne_tout(output_dir)
     nb = len(fichiers)
-    log.info(f"\nProchaine etape - uploade les {nb} fichier(s) sur claude.ai :")
+
+    log.info(f"\n{'='*70}")
+    log.info(f"  TOUT EST TERMINE !")
+    log.info(f"  {nb} fichier(s) pret(s) pour Claude :")
     for fich in fichiers:
         log.info(f"  {Path(fich).resolve()}")
     if nb > 1:
-        log.info("\nCOMMENT ENVOYER PLUSIEURS PARTIES A CLAUDE :")
-        log.info("  1. Va sur claude.ai, demarre une nouvelle conversation.")
-        log.info("  2. 'Je vais te donner plusieurs fichiers (transcriptions + PDFs).")
+        log.info("\n  Sur claude.ai :")
+        log.info("  1. 'Je vais te donner plusieurs fichiers (videos, PDFs, docs).")
         log.info("     Lis tout avant de creer le guide. Voici la partie 1.'")
-        log.info("     Attache PARTIE_1.txt")
-        log.info("  3. Pour chaque partie suivante : 'Voici la suite.' + fichier.")
-        log.info("  4. Apres la derniere : 'Cree maintenant le guide complet de")
-        log.info("     seduction en francais en 9 chapitres.'")
+        log.info("     [attache PARTIE_1.txt]")
+        log.info("  2. 'Voici la suite.' [PARTIE_2.txt] etc.")
+        log.info("  3. 'Cree maintenant le guide complet de seduction en francais.")
+        log.info("     9 chapitres : mindset, comprendre les femmes, approche,")
+        log.info("     conversation, seduction progressive, situations, erreurs,")
+        log.info("     scripts pratiques, developpement personnel.'")
     else:
-        log.info("\n  Attache le fichier sur claude.ai et demande le guide en francais.")
+        log.info("\n  Uploade sur claude.ai et demande le guide en francais.")
+    log.info(f"{'='*70}\n")
 
-    input("\nAppuie sur Entree pour fermer...")
+    input("Appuie sur Entree pour fermer...")
 
 
 if __name__ == "__main__":
