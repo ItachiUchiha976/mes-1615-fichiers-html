@@ -735,7 +735,7 @@ def main():
     log.info(f"  {nb_w} Word (.docx)   -> python-docx (gratuit)")
     log.info(f"  {nb_x} PowerPoint     -> python-pptx (gratuit)")
     log.info(f"  {nb_t} fichiers texte -> lecture directe (gratuit)")
-    log.info(f"  {len(images)} images       -> liste des noms seulement")
+    log.info(f"  {len(images)} images       -> copie dans Images_utiles/ + TOUTES_LES_IMAGES.pdf")
     log.info(f"  {len(ignores)} autres       -> ignores")
 
     if not medias and not docs:
