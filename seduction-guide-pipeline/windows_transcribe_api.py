@@ -486,13 +486,38 @@ def process_media(media_path: Path, output_txt: Path, checkpoint: dict) -> tuple
                 audio = Path(tmp) / "audio.mp3"
                 extract_audio(media_path, audio)
                 text, lang = transcribe_with_api(audio)
+            # Verifier si un fichier de sous-titres existe deja pour cette video
+            # (meme nom, extension .txt, dans le meme dossier)
+            existing_subtitle = output_txt  # meme chemin cible
+            subtitle_content = ""
+            if existing_subtitle.exists():
+                try:
+                    existing = existing_subtitle.read_text(encoding="utf-8")
+                    if "SOUS-TITRES" in existing or "sous-tit" in existing.lower():
+                        subtitle_content = existing
+                except Exception:
+                    pass
+
             header = (
                 f"=== FICHIER : {media_path.name} ===\n"
                 f"=== TYPE : {type_f} ===\n"
                 f"=== DOSSIER : {media_path.parent.name} ===\n"
                 f"=== LANGUE DETECTEE : {lang} ===\n\n"
             )
-            output_txt.write_text(header + text + "\n", encoding="utf-8")
+
+            if subtitle_content:
+                # Fusionner : sous-titres existants + transcription Whisper complete
+                contenu_final = (
+                    header +
+                    "=== TRANSCRIPTION WHISPER (complete) ===\n\n" +
+                    text + "\n\n" +
+                    "=== SOUS-TITRES ORIGINAUX (partiels, pour reference) ===\n\n" +
+                    subtitle_content
+                )
+            else:
+                contenu_final = header + text + "\n"
+
+            output_txt.write_text(contenu_final, encoding="utf-8")
             checkpoint[key] = "ok"
             save_checkpoint(checkpoint)
             duree = time.time() - t_start

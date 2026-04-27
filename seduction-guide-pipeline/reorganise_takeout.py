@@ -218,9 +218,12 @@ def main():
     print("\nCe script va :")
     print("  1. Scanner ta formation extraite depuis Google Takeout")
     print("  2. Detecter les sous-titres/transcriptions deja existants")
-    print("  3. Reorganiser tout proprement dans un nouveau dossier")
+    print("  3. DEPLACER (pas copier) les fichiers vers le dossier propre")
+    print("     -> pas de double consommation d'espace sur la cle USB !")
     print("  4. Supprimer les JSON inutiles")
-    print("  5. Convertir les sous-titres en texte pur lisible\n")
+    print("  5. Convertir les sous-titres VTT en texte pur lisible")
+    print("  6. Marquer les sous-titres comme 'partiels' (les videos seront")
+    print("     quand meme transcrites en entier via l'API pour etre complet)\n")
 
     # Choisir le dossier source (le desordre Google Takeout)
     print("ETAPE 1 : Selectionne le dossier SOURCE (le desordre Google Takeout)")
@@ -368,17 +371,23 @@ def main():
                         except Exception:
                             content = ""
                     texte = nettoyer_sous_titre(content)
-                    # Changer l'extension en .txt si ce n'est pas deja le cas
                     if dest.suffix.lower() != ".txt":
                         dest = dest.with_suffix(".txt")
-                    # Ajouter un en-tete informatif
                     header = (
-                        f"=== TRANSCRIPTION/SOUS-TITRES : {f.name} ===\n"
-                        f"=== MODULE : {module} ===\n\n"
+                        f"=== SOUS-TITRES (partiels) : {f.name} ===\n"
+                        f"=== MODULE : {module} ===\n"
+                        f"=== NOTE : Ces sous-titres peuvent etre incomplets. ===\n"
+                        f"=== La video sera aussi transcrite via Whisper API. ===\n\n"
                     )
                     dest.write_text(header + texte, encoding="utf-8")
+                    # Supprimer le fichier source apres traitement
+                    try:
+                        f.unlink()
+                    except Exception:
+                        pass
                 else:
-                    shutil.copy2(str(f), str(dest))
+                    # DEPLACEMENT (pas copie) -> pas de double consommation d'espace
+                    shutil.move(str(f), str(dest))
 
                 ok += 1
                 log_lignes.append(f"OK  {f}  ->  {dest}")
@@ -403,15 +412,13 @@ def main():
     print(f"  Log complet             : {log_path}")
     print(f"{'='*70}")
 
+    print(f"\n  PROCHAINE ETAPE :")
+    print(f"  Lance windows_transcribe_api.py sur : {sortie}")
     if sous_titres:
-        print(f"\n  IMPORTANT : {len(sous_titres)} sous-titres/transcriptions trouves !")
-        print(f"  -> Beaucoup de videos ont deja leur transcription en texte.")
-        print(f"  -> Lance windows_transcribe_api.py sur le dossier propre.")
-        print(f"     Le script detectera les .txt existants et evitera de")
-        print(f"     retranscrire les videos qui ont deja leurs sous-titres.")
-    else:
-        print(f"\n  Lance ensuite windows_transcribe_api.py sur :")
-        print(f"  {sortie}")
+        print(f"\n  Les {len(sous_titres)} sous-titres ont ete conserves comme reference.")
+        print(f"  Toutes les videos seront quand meme transcrites via Whisper API")
+        print(f"  pour garantir des transcriptions completes et exhaustives.")
+        print(f"  Les deux seront fusionnes dans le fichier final.")
 
     input("\nAppuie sur Entree pour fermer...")
 
