@@ -1,23 +1,24 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-TRANSCRIPTION VIA API OPENAI WHISPER - WINDOWS 10
-===================================================
-Transcrit toutes les videos et audios via le cloud OpenAI.
-Beaucoup plus rapide que le traitement local : ~30 a 90 min pour 50h de contenu.
+TRANSCRIPTION + PDF - API OPENAI WHISPER - WINDOWS 10
+=======================================================
+Traite TOUS les fichiers utiles d'un dossier :
+  - Videos (.mp4, .mkv, .avi...) -> transcription via API OpenAI Whisper
+  - Audios (.mp3, .wav, .m4a...) -> transcription via API OpenAI Whisper
+  - PDFs                         -> extraction du texte (gratuit, local)
+  - Autres (.zip, .exe...)       -> ignores silencieusement
 
-COUT : $0.006 par minute audio
+COUT (videos/audios uniquement) : $0.006 par minute audio
   Exemple : 50h = 3000 min x $0.006 = ~18$
 
-QUALITE : whisper-1 (equivalent large-v2, excellent)
-
 INSTALLATION :
-  pip install openai
+  pip install openai pymupdf
 
 USAGE :
-  1. Entre ta cle API OpenAI ci-dessous (OPENAI_API_KEY)
+  1. Entre ta cle API OpenAI ci-dessous
   2. Double-clique sur ce fichier
-  3. Le script calcule d'abord le cout total, tu confirmes, puis ca demarre
+  3. Le script affiche le cout estime, tu confirmes, puis ca demarre
 """
 
 import json
@@ -55,7 +56,10 @@ VIDEO_EXTENSIONS = {
 AUDIO_EXTENSIONS = {
     ".mp3", ".wav", ".aac", ".ogg", ".wma", ".m4a", ".opus", ".flac"
 }
+PDF_EXTENSIONS = {".pdf"}
+
 ALL_MEDIA_EXTENSIONS = VIDEO_EXTENSIONS | AUDIO_EXTENSIONS
+ALL_EXTENSIONS = ALL_MEDIA_EXTENSIONS | PDF_EXTENSIONS
 
 # ================================================================================
 
@@ -179,6 +183,60 @@ def split_audio_chunks(audio_path: Path, out_dir: Path) -> list:
         startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
     subprocess.run(cmd, capture_output=True, startupinfo=startupinfo)
     return sorted(out_dir.glob("chunk_*.mp3"))
+
+
+# -- Extraction PDF --------------------------------------------------------------
+
+def extract_pdf_text(pdf_path: Path) -> str:
+    """
+    Extrait tout le texte d'un PDF avec PyMuPDF (fitz).
+    Gratuit, local, aucun appel API.
+    Retourne le texte brut avec les numeros de page.
+    """
+    try:
+        import fitz  # PyMuPDF
+        doc = fitz.open(str(pdf_path))
+        pages = []
+        for i, page in enumerate(doc, 1):
+            text = page.get_text().strip()
+            if text:
+                pages.append(f"--- Page {i} ---\n{text}")
+        doc.close()
+        return "\n\n".join(pages) if pages else "(PDF sans texte extractible - probablement scanne)"
+    except ImportError:
+        return "(PyMuPDF non installe - lance : pip install pymupdf)"
+    except Exception as e:
+        return f"(Erreur extraction PDF : {e})"
+
+
+def process_pdf(pdf_path: Path, output_txt: Path, checkpoint: dict) -> bool:
+    """Extrait le texte d'un PDF et sauvegarde le .txt."""
+    key = str(pdf_path)
+    if checkpoint.get(key) == "ok" and output_txt.exists():
+        log.info(f"  [SKIP] Deja traite : {pdf_path.name}")
+        return True
+
+    log.info(f"  --> [PDF] {pdf_path.name}")
+    output_txt.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        text = extract_pdf_text(pdf_path)
+        nb_pages = text.count("--- Page ")
+        header = (
+            f"=== FICHIER : {pdf_path.name} ===\n"
+            f"=== TYPE : PDF ===\n"
+            f"=== DOSSIER : {pdf_path.parent.name} ===\n"
+            f"=== PAGES : {nb_pages} ===\n\n"
+        )
+        output_txt.write_text(header + text + "\n", encoding="utf-8")
+        checkpoint[key] = "ok"
+        save_checkpoint(checkpoint)
+        log.info(f"    OK ({nb_pages} pages) : {output_txt.name}")
+        return True
+    except Exception as e:
+        log.error(f"    ECHEC PDF {pdf_path.name} : {e}")
+        checkpoint[key] = f"erreur: {e}"
+        save_checkpoint(checkpoint)
+        return False
 
 
 # -- Transcription API -----------------------------------------------------------
@@ -438,110 +496,141 @@ def main():
     log.info(f"  Taille max/partie  : {MAX_BYTES_PAR_PARTIE/1024/1024:.1f} Mo")
     log.info("=" * 70 + "\n")
 
-    # Collecter les fichiers
-    medias = sorted_naturally([
+    # Collecter TOUS les fichiers (video + audio + PDF)
+    tous_fichiers = sorted_naturally([
         p for p in media_root.rglob("*")
-        if p.is_file() and p.suffix.lower() in ALL_MEDIA_EXTENSIONS
+        if p.is_file() and p.suffix.lower() in ALL_EXTENSIONS
     ])
 
-    if not medias:
-        log.error(f"Aucun fichier video/audio trouve dans : {media_root}")
+    if not tous_fichiers:
+        log.error(f"Aucun fichier video/audio/PDF trouve dans : {media_root}")
         input("Appuie sur Entree pour fermer...")
         sys.exit(1)
 
+    medias = [f for f in tous_fichiers if f.suffix.lower() in ALL_MEDIA_EXTENSIONS]
+    pdfs   = [f for f in tous_fichiers if f.suffix.lower() in PDF_EXTENSIONS]
+
     nb_videos = sum(1 for m in medias if m.suffix.lower() in VIDEO_EXTENSIONS)
-    nb_audios  = sum(1 for m in medias if m.suffix.lower() in AUDIO_EXTENSIONS)
-    log.info(f"Fichiers trouves : {len(medias)} ({nb_videos} videos, {nb_audios} audios)")
+    nb_audios = sum(1 for m in medias if m.suffix.lower() in AUDIO_EXTENSIONS)
+    nb_pdfs   = len(pdfs)
+    log.info(f"Fichiers trouves : {len(tous_fichiers)} total")
+    log.info(f"  -> {nb_videos} videos, {nb_audios} audios (API Whisper, payant)")
+    log.info(f"  -> {nb_pdfs} PDFs (extraction locale, GRATUIT)")
 
-    # Calcul de la duree totale et du cout estime
-    log.info("\nCalcul de la duree totale pour estimer le cout...")
-    log.info("(Analyse de chaque fichier via ffprobe, 1-3 minutes...)\n")
-
-    duree_totale_s = 0.0
-    for i, m in enumerate(medias, 1):
-        d = get_duration_seconds(m)
-        duree_totale_s += d
-        print(f"\r  Analyse {i}/{len(medias)} : {m.name[:50]:<50}", end="", flush=True)
-
-    print()  # retour a la ligne
+    # Estimation du cout (videos/audios via API, PDFs = gratuit)
+    if medias:
+        log.info(f"\nCalcul de la duree totale des videos/audios (1-3 minutes)...\n")
+        duree_totale_s = 0.0
+        for i, m in enumerate(medias, 1):
+            d = get_duration_seconds(m)
+            duree_totale_s += d
+            print(f"\r  Analyse {i}/{len(medias)} : {m.name[:50]:<50}", end="", flush=True)
+        print()
+    else:
+        duree_totale_s = 0.0
 
     duree_min = duree_totale_s / 60
     cout = duree_min * 0.006
-    marge = cout + 3  # +3$ de marge de securite
+    marge = cout + 3
 
     log.info("\n" + "=" * 70)
     log.info("  ESTIMATION DU COUT AVANT DE COMMENCER")
     log.info("=" * 70)
-    log.info(f"  Duree totale des fichiers : {format_duree(duree_totale_s)}"
-             f"  ({duree_min:.0f} minutes)")
-    log.info(f"  Tarif API OpenAI Whisper  : $0.006 / minute")
-    log.info(f"  COUT ESTIME               : ${cout:.2f}")
-    log.info(f"  Recommandation credits    : au moins ${marge:.0f}"
-             f" (cout + marge de securite)")
-    log.info(f"  Duree du traitement       : ~30 a 90 minutes")
+    if medias:
+        log.info(f"  Videos/Audios a transcrire : {len(medias)} fichiers")
+        log.info(f"  Duree totale               : {format_duree(duree_totale_s)} ({duree_min:.0f} min)")
+        log.info(f"  Tarif API OpenAI Whisper   : $0.006 / minute")
+        log.info(f"  COUT ESTIME                : ${cout:.2f}")
+        log.info(f"  Credits recommandes        : au moins ${marge:.0f} (avec marge)")
+    else:
+        log.info("  Aucun fichier video/audio -> cout API : $0.00")
+    log.info(f"  PDFs a extraire (GRATUIT)  : {nb_pdfs} fichiers")
+    log.info(f"  Duree totale traitement    : ~30 a 90 minutes")
     log.info("=" * 70)
-    log.info(f"\n  Verifie que ton compte OpenAI a au moins ${marge:.0f} de credits")
-    log.info(f"  sur : https://platform.openai.com/usage")
+    if medias:
+        log.info(f"\n  Verifie tes credits : https://platform.openai.com/usage")
     log.info("")
 
-    reponse = input("Continuer la transcription ? (oui / non) : ").strip().lower()
+    reponse = input("Continuer ? (oui / non) : ").strip().lower()
     if reponse not in ("oui", "o", "yes", "y"):
-        print("Annule. Recharge tes credits puis relance.")
+        print("Annule.")
         sys.exit(0)
 
-    # Lancement
+    # ── Etape 1 : Extraction des PDFs (gratuit, local) ──────────────────────────
     checkpoint = load_checkpoint()
-    total = len(medias)
-    deja = sum(1 for m in medias if checkpoint.get(str(m)) == "ok")
-    log.info(f"\nDeja transcrits   : {deja} (seront ignores [SKIP])")
-    log.info(f"Restant a traiter : {total - deja}")
-    log.info("Debut de la transcription via API OpenAI...\n")
 
-    success, errors = 0, 0
-    durees = []
-    debut_global = time.time()
+    if pdfs:
+        log.info(f"\n--- ETAPE 1/2 : Extraction des PDFs ({nb_pdfs} fichiers) ---\n")
+        pdf_ok, pdf_err = 0, 0
+        for i, pdf in enumerate(pdfs, 1):
+            try:
+                rel = pdf.relative_to(media_root)
+            except ValueError:
+                rel = Path(pdf.name)
+            output_txt = output_dir / rel.parent / (pdf.stem + ".txt")
+            log.info(f"[{i}/{nb_pdfs}] {rel}")
+            if process_pdf(pdf, output_txt, checkpoint):
+                pdf_ok += 1
+            else:
+                pdf_err += 1
+        log.info(f"\nPDFs : {pdf_ok} OK, {pdf_err} erreur(s)")
 
-    for i, media in enumerate(medias, 1):
-        try:
-            rel = media.relative_to(media_root)
-        except ValueError:
-            rel = Path(media.name)
+    # ── Etape 2 : Transcription des videos/audios (API) ─────────────────────────
+    if not medias:
+        log.info("\nAucun fichier video/audio a transcrire.")
+    else:
+        total = len(medias)
+        deja = sum(1 for m in medias if checkpoint.get(str(m)) == "ok")
+        log.info(f"\n--- ETAPE 2/2 : Transcription videos/audios ({total} fichiers) ---")
+        log.info(f"  Deja transcrits   : {deja} [SKIP]")
+        log.info(f"  Restant a traiter : {total - deja}\n")
 
-        output_txt = output_dir / rel.parent / (media.stem + ".txt")
-        log.info(f"\n[{i}/{total}] {rel}")
+        success, errors = 0, 0
+        durees = []
+        debut_global = time.time()
 
-        ok, duree = process_media(media, output_txt, checkpoint)
-        if ok:
-            success += 1
-            if duree > 1.0:
-                durees.append(duree)
-        else:
-            errors += 1
+        for i, media in enumerate(medias, 1):
+            try:
+                rel = media.relative_to(media_root)
+            except ValueError:
+                rel = Path(media.name)
+            output_txt = output_dir / rel.parent / (media.stem + ".txt")
+            log.info(f"\n[{i}/{total}] {rel}")
+            ok, duree = process_media(media, output_txt, checkpoint)
+            if ok:
+                success += 1
+                if duree > 1.0:
+                    durees.append(duree)
+            else:
+                errors += 1
+            affiche_barre(i, total, debut_global, success, errors, durees)
 
-        affiche_barre(i, total, debut_global, success, errors, durees)
+        temps_total = time.time() - debut_global
+        log.info("\n" + "=" * 70)
+        log.info("  TERMINE !")
+        log.info(f"  Videos/Audios transcrits : {success}/{total}")
+        log.info(f"  Erreurs                  : {errors}")
+        log.info(f"  Temps total              : {format_duree(temps_total)}")
+        log.info(f"  Cout reel (estime)       : ${cout:.2f}")
+        log.info("=" * 70)
 
-    temps_total = time.time() - debut_global
-    log.info("\n" + "=" * 70)
-    log.info("  TERMINE !")
-    log.info(f"  Transcrits avec succes : {success}/{total}")
-    log.info(f"  Erreurs                : {errors}")
-    log.info(f"  Temps total            : {format_duree(temps_total)}")
-    log.info(f"  Cout reel (estime)     : ${(duree_min * 0.006):.2f}")
-    log.info("=" * 70)
-
-    if success > 0:
-        fichiers = fusionne_tout(output_dir)
-        nb = len(fichiers)
-        log.info(f"\nProchaine etape - uploade les {nb} fichier(s) sur claude.ai :")
-        for fich in fichiers:
-            log.info(f"  {Path(fich).resolve()}")
-        if nb > 1:
-            log.info("\n  Envoie-les un par un dans la meme conversation Claude.")
-            log.info("  Commence par : 'Voici la partie 1, lis tout avant de creer le guide.'")
-
-    if errors > 0:
-        log.warning(f"\n{errors} fichier(s) ont echoue.")
-        log.warning("Relance le script pour reessayer automatiquement.")
+    # ── Fusion finale ────────────────────────────────────────────────────────────
+    fichiers = fusionne_tout(output_dir)
+    nb = len(fichiers)
+    log.info(f"\nProchaine etape - uploade les {nb} fichier(s) sur claude.ai :")
+    for fich in fichiers:
+        log.info(f"  {Path(fich).resolve()}")
+    if nb > 1:
+        log.info("\nCOMMENT ENVOYER PLUSIEURS PARTIES A CLAUDE :")
+        log.info("  1. Va sur claude.ai, demarre une nouvelle conversation.")
+        log.info("  2. 'Je vais te donner plusieurs fichiers (transcriptions + PDFs).")
+        log.info("     Lis tout avant de creer le guide. Voici la partie 1.'")
+        log.info("     Attache PARTIE_1.txt")
+        log.info("  3. Pour chaque partie suivante : 'Voici la suite.' + fichier.")
+        log.info("  4. Apres la derniere : 'Cree maintenant le guide complet de")
+        log.info("     seduction en francais en 9 chapitres.'")
+    else:
+        log.info("\n  Attache le fichier sur claude.ai et demande le guide en francais.")
 
     input("\nAppuie sur Entree pour fermer...")
 
