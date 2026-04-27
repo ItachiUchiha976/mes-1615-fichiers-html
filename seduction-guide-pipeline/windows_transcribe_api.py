@@ -322,36 +322,121 @@ def process_text_file(file_path: Path, output_txt: Path, checkpoint: dict) -> bo
         return False
 
 
-# -- Traitement images (liste uniquement) ----------------------------------------
+# -- Traitement images : copie + PDF regroupe ------------------------------------
 
-def process_images_list(images: list, output_dir: Path, media_root: Path):
+def process_images(images: list, output_dir: Path, media_root: Path):
     """
-    Cree un fichier 'LISTE_IMAGES.txt' repertoriant toutes les images trouvees.
-    Les images ne peuvent pas etre transcrites en texte sans API Vision,
-    mais leur liste permet a Claude de savoir qu'elles existent.
+    Pour chaque image trouvee :
+      1. La copie dans output_dir/Images_utiles/ (meme sous-dossier que l'original)
+      2. Cree un PDF unique 'TOUTES_LES_IMAGES.pdf' avec toutes les images,
+         une par page, avec le nom du fichier et son dossier en titre de page.
+
+    Le PDF peut etre envoye directement a Claude sur claude.ai (1 seul fichier).
     """
+    import shutil
+
     if not images:
         return
-    output_file = output_dir / "LISTE_IMAGES.txt"
+
     output_dir.mkdir(parents=True, exist_ok=True)
-    with open(output_file, "w", encoding="utf-8") as f:
-        f.write("=== LISTE DES IMAGES TROUVEES DANS LES FORMATIONS ===\n")
-        f.write(f"=== Total : {len(images)} images ===\n\n")
-        f.write("Ces images ne sont pas transcrites automatiquement.\n")
-        f.write("Si certaines contiennent des schemas ou infographies importants,\n")
-        f.write("tu peux les envoyer directement a Claude separement.\n\n")
-        current_folder = None
-        for img in sorted_naturally(images):
+    images_dir = output_dir / "Images_utiles"
+    images_dir.mkdir(exist_ok=True)
+
+    log.info(f"  Copie de {len(images)} image(s) dans Images_utiles/...")
+
+    # Copier les images en preservant l'arborescence
+    copied = []
+    for img in sorted_naturally(images):
+        try:
+            rel = img.relative_to(media_root)
+        except ValueError:
+            rel = Path(img.name)
+        dest = images_dir / rel
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            shutil.copy2(str(img), str(dest))
+            copied.append((img, rel))
+        except Exception as e:
+            log.warning(f"    Copie impossible : {img.name} -> {e}")
+
+    log.info(f"  {len(copied)} image(s) copiee(s) dans : {images_dir}")
+
+    # Creer le PDF regroupe avec PyMuPDF
+    pdf_output = output_dir / "TOUTES_LES_IMAGES.pdf"
+    try:
+        import fitz  # PyMuPDF
+
+        doc = fitz.open()  # nouveau document PDF vide
+
+        for img_path, rel in copied:
             try:
-                rel = img.relative_to(media_root)
-            except ValueError:
-                rel = img
+                # Ouvrir l'image et l'inserer dans une nouvelle page
+                img_doc = fitz.open(str(img_path))
+                # Recuperer les dimensions de l'image
+                img_rect = img_doc[0].rect if img_doc.page_count > 0 else fitz.Rect(0, 0, 595, 842)
+                img_doc.close()
+
+                # Taille de page : A4 portrait ou dimensions de l'image si plus grande
+                page_w = max(595, img_rect.width + 40)
+                page_h = max(100, img_rect.height + 80)  # +80 pour le titre en haut
+
+                page = doc.new_page(width=page_w, height=page_h)
+
+                # Titre en haut de page : nom du fichier + dossier
+                titre = f"{img_path.name}  |  {rel.parent}"
+                page.insert_text(
+                    fitz.Point(20, 20),
+                    titre,
+                    fontsize=10,
+                    color=(0.2, 0.2, 0.2),
+                )
+                page.insert_text(
+                    fitz.Point(20, 35),
+                    "-" * min(80, int(page_w / 7)),
+                    fontsize=8,
+                    color=(0.5, 0.5, 0.5),
+                )
+
+                # Inserer l'image sous le titre
+                img_zone = fitz.Rect(20, 50, page_w - 20, page_h - 20)
+                page.insert_image(img_zone, filename=str(img_path))
+
+            except Exception as e:
+                # Si une image pose probleme, ajouter une page d'erreur
+                page = doc.new_page(width=595, height=100)
+                page.insert_text(
+                    fitz.Point(20, 50),
+                    f"ERREUR image : {img_path.name} -> {e}",
+                    fontsize=10,
+                    color=(0.8, 0, 0),
+                )
+
+        doc.save(str(pdf_output))
+        doc.close()
+        taille_mo = pdf_output.stat().st_size / 1024 / 1024
+        log.info(f"  PDF images cree : {pdf_output}  ({taille_mo:.1f} Mo)")
+        log.info(f"  -> Envoie ce PDF a Claude en meme temps que les transcriptions.")
+
+    except ImportError:
+        log.warning("  PyMuPDF non installe -> PDF non cree. Lance : pip install pymupdf")
+    except Exception as e:
+        log.error(f"  Erreur creation PDF images : {e}")
+
+    # Creer aussi le fichier texte de reference
+    ref_file = output_dir / "LISTE_IMAGES.txt"
+    with open(ref_file, "w", encoding="utf-8") as f:
+        f.write("=== IMAGES DES FORMATIONS ===\n")
+        f.write(f"=== Total : {len(copied)} images ===\n\n")
+        f.write("FICHIER PDF CONTENANT TOUTES LES IMAGES : TOUTES_LES_IMAGES.pdf\n")
+        f.write("Envoie ce PDF a Claude en meme temps que les fichiers de transcription.\n\n")
+        current_folder = None
+        for img_path, rel in copied:
             folder = str(rel.parent)
             if folder != current_folder:
                 f.write(f"\n[{folder}]\n")
                 current_folder = folder
-            f.write(f"  - {img.name}\n")
-    log.info(f"  Liste des images sauvegardee : {output_file}")
+            f.write(f"  - {img_path.name}\n")
+    log.info(f"  Liste de reference : {ref_file}")
 
 
 # -- Transcription API OpenAI ----------------------------------------------------
@@ -690,10 +775,10 @@ def main():
                 err_d += 1
         log.info(f"\nDocuments : {ok_d} OK, {err_d} erreur(s)")
 
-    # ── ETAPE 2 : Images (liste uniquement) ─────────────────────────────────
+    # ── ETAPE 2 : Images (copie + PDF regroupe) ─────────────────────────────
     if images:
-        log.info(f"\n--- ETAPE 2/3 : Images ({len(images)}, liste uniquement) ---")
-        process_images_list(images, output_dir, media_root)
+        log.info(f"\n--- ETAPE 2/3 : Images ({len(images)} -> copie + PDF regroupe) ---")
+        process_images(images, output_dir, media_root)
 
     # ── ETAPE 3 : Videos/Audios (API Whisper) ────────────────────────────────
     if medias:
@@ -736,18 +821,36 @@ def main():
     log.info(f"  {nb} fichier(s) pret(s) pour Claude :")
     for fich in fichiers:
         log.info(f"  {Path(fich).resolve()}")
+    # Verifier si le PDF images existe
+    pdf_images = output_dir / "TOUTES_LES_IMAGES.pdf"
+    if pdf_images.exists():
+        taille_img = pdf_images.stat().st_size / 1024 / 1024
+        log.info(f"\n  PDF images : {pdf_images}  ({taille_img:.1f} Mo)")
+
+    log.info("\n  SUR CLAUDE.AI - ORDRE D'ENVOI :")
     if nb > 1:
-        log.info("\n  Sur claude.ai :")
-        log.info("  1. 'Je vais te donner plusieurs fichiers (videos, PDFs, docs).")
-        log.info("     Lis tout avant de creer le guide. Voici la partie 1.'")
+        log.info("  1. 'Je vais te donner plusieurs fichiers de formations sur la")
+        log.info("     seduction (transcriptions videos + PDFs + docs + images).")
+        log.info("     Lis TOUT avant de creer le guide. Voici la partie 1.'")
         log.info("     [attache PARTIE_1.txt]")
-        log.info("  2. 'Voici la suite.' [PARTIE_2.txt] etc.")
-        log.info("  3. 'Cree maintenant le guide complet de seduction en francais.")
-        log.info("     9 chapitres : mindset, comprendre les femmes, approche,")
-        log.info("     conversation, seduction progressive, situations, erreurs,")
-        log.info("     scripts pratiques, developpement personnel.'")
+        log.info("  2. 'Voici la suite.' [attache PARTIE_2.txt, PARTIE_3.txt...]")
     else:
-        log.info("\n  Uploade sur claude.ai et demande le guide en francais.")
+        log.info("  1. 'Voici les transcriptions et documents de mes formations.'")
+        log.info("     [attache le fichier PARTIE_1.txt]")
+    if pdf_images.exists():
+        log.info("  +  'Voici egalement les images/schemas des formations.'")
+        log.info("     [attache TOUTES_LES_IMAGES.pdf]")
+    log.info("  -> Dernier message : 'C'est tout. Cree maintenant le guide")
+    log.info("     COMPLET de seduction en francais, en 9 chapitres :'")
+    log.info("     1. Mindset & confiance en soi")
+    log.info("     2. Comprendre les femmes")
+    log.info("     3. L'approche (avec scripts)")
+    log.info("     4. La conversation & connexion")
+    log.info("     5. La seduction progressive")
+    log.info("     6. Situations specifiques (Tinder, soirees, etc.)")
+    log.info("     7. Erreurs a eviter")
+    log.info("     8. Scripts & phrases pratiques")
+    log.info("     9. Developpement personnel'")
     log.info(f"{'='*70}\n")
 
     input("Appuie sur Entree pour fermer...")
