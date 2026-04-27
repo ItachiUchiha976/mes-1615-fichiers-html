@@ -90,8 +90,14 @@ def est_sous_titre(filename: str) -> bool:
 
 def nettoyer_sous_titre(content: str) -> str:
     """
-    Convertit un fichier SRT/VTT/sous-titres en texte pur lisible.
-    Supprime les horodatages, numeros de sequence, balises HTML.
+    Convertit SRT/VTT YouTube en texte pur lisible.
+
+    Le format VTT YouTube a deux problemes :
+      1. Lignes avec horodatages mot par mot : Okay,<00:00:00.560><c> so</c>...
+      2. Phrases repetees en double (la phrase complete + la ligne karaoke)
+
+    Strategie : ne garder QUE les lignes sans balise '<' (les lignes propres),
+    ignorer les lignes karaoke, puis dedupliquer.
     """
     lines = content.splitlines()
     texte_pur = []
@@ -100,33 +106,58 @@ def nettoyer_sous_titre(content: str) -> str:
         line = line.strip()
         if not line:
             continue
-        # Ignorer les numeros de sequence SRT (ligne = un seul nombre)
+        # Ignorer entetes VTT
+        if re.match(r"^(WEBVTT|NOTE|STYLE|Kind:|Language:)", line):
+            continue
+        # Ignorer les numeros de sequence SRT
         if re.match(r"^\d+$", line):
             continue
-        # Ignorer les horodatages SRT (00:00:00,000 --> 00:00:00,000)
-        if re.match(r"\d{1,2}:\d{2}:\d{2}[,\.]\d{3}\s*-->\s*\d{1,2}:\d{2}:\d{2}", line):
+        # Ignorer toutes les lignes d'horodatage (SRT et VTT)
+        if re.match(r"\d{1,2}:\d{2}:\d{2}[,\.]\d{3}\s*-->", line):
             continue
-        # Ignorer les horodatages VTT simples (00:00.000 --> 00:00.000)
-        if re.match(r"\d{1,2}:\d{2}[,\.]\d{3}\s*-->\s*", line):
+        if re.match(r"\d{1,2}:\d{2}[,\.]\d{3}\s*-->", line):
             continue
-        # Ignorer les entetes VTT
-        if line.startswith("WEBVTT") or line.startswith("NOTE") or line.startswith("STYLE"):
+        # CLES : ignorer les lignes qui contiennent des balises temporelles VTT
+        # ex: Okay,<00:00:00.560><c> so</c><00:00:00.719><c> that's</c>...
+        # Ces lignes sont les doublons "karaoke" -> on les saute completement
+        if "<" in line and re.search(r"<\d{2}:\d{2}", line):
             continue
-        # Supprimer les balises HTML (<i>, <b>, <font ...>, etc.)
+        # Supprimer les eventuelles balises HTML residuelles (<i>, <b>, etc.)
         line = re.sub(r"<[^>]+>", "", line)
-        # Supprimer les balises de positionnement VTT {..}
+        # Supprimer les tags de positionnement {align:start}
         line = re.sub(r"\{[^}]+\}", "", line)
-        line = line.strip()
+        # Nettoyer les espaces multiples
+        line = re.sub(r"\s+", " ", line).strip()
         if line:
             texte_pur.append(line)
 
-    # Fusionner les lignes en paragraphes (eviter les repetitions consecutives)
+    # Dedupliquer : supprimer TOUTES les repetitions (pas seulement consecutives)
+    # Le VTT YouTube repete la meme phrase plusieurs fois de suite
+    # On garde la derniere occurrence de chaque "bloc" de phrases identiques
+    if not texte_pur:
+        return ""
+
+    # Algorithme : garder une ligne uniquement si elle n'est pas la meme
+    # que la precedente ET qu'elle apporte du nouveau contenu
     result = []
     prev = ""
     for line in texte_pur:
-        if line != prev:
-            result.append(line)
-            prev = line
+        # Normaliser pour la comparaison (minuscules, espaces)
+        normalized = line.lower().strip()
+        prev_normalized = prev.lower().strip()
+
+        # Ignorer si identique a la precedente
+        if normalized == prev_normalized:
+            continue
+
+        # Ignorer si la ligne precedente CONTIENT deja cette ligne
+        # (cas frequents dans VTT : "Okay" puis "Okay, so that's a lot")
+        if prev_normalized.startswith(normalized) and len(normalized) > 10:
+            continue
+
+        # Mettre a jour avec la version la plus complete
+        result.append(line)
+        prev = line
 
     return " ".join(result)
 
